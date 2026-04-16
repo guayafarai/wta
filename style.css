@@ -1,54 +1,33 @@
-:root { 
-    --rd-red: #d90429; 
-    --rd-blue: #0077b6; 
-    --rd-bg: #ffffff; 
-    --rd-border: #eeeeee; 
-}
+:root { --rd-red: #d90429; --rd-blue: #0077b6; --rd-bg: #ffffff; --rd-border: #eeeeee; }
 
 body { margin: 0; font-family: Arial, sans-serif; background: var(--rd-bg); }
 
-/* REPRODUCTOR */
-#videoContainer { 
-    position: fixed; top: 0; left: 0; width: 100%; height: 100%; 
-    background: #000; display: none; z-index: 9999; 
-    flex-direction: column; justify-content: center; align-items: center;
-}
-video { width: 100%; height: auto; max-height: 100%; }
-#closePlayer { 
-    position: absolute; top: 20px; left: 20px; 
-    background: rgba(217, 4, 41, 0.8); color: #fff; border: none; 
-    padding: 10px 20px; border-radius: 50px; cursor: pointer; 
-    font-weight: bold; z-index: 10000; font-size: 14px;
-}
-
-/* OCULTAR INTERFAZ AL REPRODUCIR */
-.playing-now #main-ui, 
-.playing-now header, 
-.playing-now footer, 
+/* Contenedor del buscador */
 .search-container { 
-    display: none !important; 
+    padding: 15px; 
+    background: #f4f4f4; 
+    border-bottom: 2px solid var(--rd-border);
+    display: block !important; /* Forzamos que se vea */
 }
 
-header { background: var(--rd-red); padding: 15px; color: #fff; text-align: center; }
-header h1 { font-size: 18px; margin: 0; font-weight: 900; }
-
-/* ESTILOS DEL BUSCADOR */
-.search-container { 
-    padding: 12px; 
-    background: #f1f1f1; 
-    border-bottom: 1px solid var(--rd-border); 
-}
 #channelSearch { 
     width: 100%; 
     padding: 12px; 
     border-radius: 8px; 
     border: 1px solid #ccc; 
-    box-sizing: border-box; 
     font-size: 16px;
-    outline: none;
+    box-sizing: border-box;
 }
 
-/* TABLA DE CANALES */
+/* Ocultar todo cuando el video esté activo */
+.playing-now #main-ui, .playing-now header, .playing-now footer, .playing-now .search-container { 
+    display: none !important; 
+}
+
+/* El resto de tus estilos de tabla y reproductor... */
+#videoContainer { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: #000; display: none; z-index: 9999; flex-direction: column; justify-content: center; align-items: center; }
+video { width: 100%; height: auto; max-height: 100%; }
+#closePlayer { position: absolute; top: 20px; left: 20px; background: rgba(217, 4, 41, 0.8); color: #fff; border: none; padding: 10px 20px; border-radius: 50px; cursor: pointer; z-index: 10000; }
 table { width: 100%; border-collapse: collapse; }
 .cat-tag { background: #333; color: #fff; padding: 10px; font-size: 11px; text-transform: uppercase; }
 .channel-row { border-bottom: 1px solid var(--rd-border); }
