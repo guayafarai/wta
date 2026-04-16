@@ -2,7 +2,7 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
     <title>PlayCast PRO</title>
     <link rel="stylesheet" href="style.css">
     <script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
@@ -10,8 +10,8 @@
 <body>
 
     <div id="videoContainer">
-        <button id="closePlayer" onclick="stopStream()">← VOLVER A LA LISTA</button>
-        <video id="video" controls playsinline crossorigin="anonymous"></video>
+        <button id="closePlayer" onclick="stopStream()">← CERRAR</button>
+        <video id="video" controls playsinline></video>
     </div>
 
     <header><h1>PLAYCAST LIVE</h1></header>
@@ -21,16 +21,9 @@
     </div>
 
     <div id="main-ui">
-        <table>
-            <tbody id="channel-list">
-                <tr class="cat-tag"><td colspan="3">Sincronizando canales...</td></tr>
-            </tbody>
-        </table>
+        <div id="channel-list"></div>
     </div>
 
-    <footer id="footer-text"></footer>
-
     <script src="script.js"></script>
-    <script async="async" data-cfasync="false" src="https://pl29162788.profitablecpmratenetwork.com/17/3e/b5/173eb5fab095ceeab6dd66737d0b6d03.js"></script>
 </body>
 </html>

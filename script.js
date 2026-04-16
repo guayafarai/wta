@@ -5,54 +5,36 @@ const searchInput = document.getElementById('channelSearch');
 let hls;
 let allChannels = [];
 
-// Cargar canales
 fetch('config.json')
     .then(res => res.json())
     .then(data => {
-        document.getElementById('footer-text').innerText = data.footer_text;
         allChannels = data.channels;
         renderChannels(allChannels);
     });
 
 function renderChannels(channels) {
-    list.innerHTML = ''; // Limpiar lista
+    list.innerHTML = '';
     
-    if (channels.length === 0) {
-        list.innerHTML = '<tr><td colspan="3" style="text-align:center; padding:50px; color:#aaa;">No se encontraron canales</td></tr>';
-        return;
-    }
-
-    // Etiqueta de sección
-    const tagRow = document.createElement('tr');
-    tagRow.className = 'cat-tag';
-    tagRow.innerHTML = '<td colspan="3" style="padding: 10px 0;">Canales Disponibles</td>';
-    list.appendChild(tagRow);
-
     channels.forEach(ch => {
-        const row = document.createElement('tr');
         const isVip = ch.is_vip;
-        row.className = isVip ? 'channel-row vip-row' : 'channel-row';
-        
-        row.innerHTML = `
-            <td style="width:50px; text-align:center; font-size: 20px;">${isVip ? '⭐' : '📺'}</td>
-            <td style="padding: 20px 10px;">
-                <div style="font-weight: 700; color: ${isVip ? 'var(--primary)' : 'var(--text-dark)'}; cursor:pointer;" 
-                     onclick="${isVip ? `window.open('${ch.url}', '_blank')` : `playStream('${ch.url}')`}">
-                    ${ch.name}
-                </div>
-            </td>
-            <td style="text-align:right; padding-right: 15px;">
-                <button class="btn-play ${isVip ? 'btn-vip' : ''}" 
-                        onclick="${isVip ? `window.open('${ch.url}', '_blank')` : `playStream('${ch.url}')`}">
-                    ${isVip ? 'PREMIUM' : 'VER'}
-                </button>
-            </td>
+        const card = document.createElement('div');
+        card.className = 'channel-card';
+        if(isVip) card.style.borderLeft = '5px solid var(--primary)';
+
+        card.innerHTML = `
+            <div class="channel-info">
+                <span style="font-size: 20px;">${isVip ? '⭐' : '📺'}</span>
+                <span class="channel-name">${ch.name}</span>
+            </div>
+            <button class="btn-play" style="background:${isVip ? 'var(--primary)' : '#222'}; color:#fff; border:none; padding:8px 15px; border-radius:8px; font-weight:bold;" 
+                onclick="${isVip ? `window.open('${ch.url}', '_blank')` : `playStream('${ch.url}')`}">
+                ${isVip ? 'VIP' : 'VER'}
+            </button>
         `;
-        list.appendChild(row);
+        list.appendChild(card);
     });
 }
 
-// Buscador con delay mínimo para rendimiento
 searchInput.addEventListener('input', (e) => {
     const term = e.target.value.toLowerCase();
     const filtered = allChannels.filter(ch => ch.name.toLowerCase().includes(term));
@@ -79,6 +61,5 @@ function stopStream() {
     document.body.classList.remove('playing-now');
     container.style.display = 'none';
     video.pause();
-    video.src = "";
     if (hls) hls.destroy();
 }
