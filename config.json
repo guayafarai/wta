@@ -1,16 +1,10 @@
 {
-  "footer_text": "IPTV PRO • Panel Administrable • 2026",
-  "adsterra_html": "<div style='height:50px; line-height:50px; color:#ddd;'><script src="https://pl29162788.profitablecpmratenetwork.com/17/3e/b5/173eb5fab095ceeab6dd66737d0b6d03.js"></script>
-</div>",
+  "footer_text": "IPTV PRO • GitHub Pages • 2026",
+  "adsterra_html": "<script async='async' data-cfasync='false' src='//pl29162788.profitablecpmratenetwork.com/17/3e/b5/173eb5fab095ceeab6dd66737d0b6d03.js'></script>",
   "channels": [
     {
       "name": "Venevisión En Vivo (HD)",
       "url": "https://venevision-blocked-cdn.encoders.immergo.tv/master.m3u8",
-      "is_vip": false
-    },
-    {
-      "name": "Canal de Prueba 2",
-      "url": "https://test-streams.mux.dev/x36xhzz/x36xhzz.m3u8",
       "is_vip": false
     },
     {
