@@ -7,37 +7,48 @@
 
 body { margin: 0; font-family: Arial, sans-serif; background: var(--rd-bg); }
 
-/* REPRODUCTOR PANTALLA COMPLETA */
+/* REPRODUCTOR */
 #videoContainer { 
     position: fixed; top: 0; left: 0; width: 100%; height: 100%; 
     background: #000; display: none; z-index: 9999; 
     flex-direction: column; justify-content: center; align-items: center;
 }
-
 video { width: 100%; height: auto; max-height: 100%; }
-
 #closePlayer { 
     position: absolute; top: 20px; left: 20px; 
     background: rgba(217, 4, 41, 0.8); color: #fff; border: none; 
     padding: 10px 20px; border-radius: 50px; cursor: pointer; 
     font-weight: bold; z-index: 10000; font-size: 14px;
-    box-shadow: 0 4px 10px rgba(0,0,0,0.5);
 }
 
-/* INTERFAZ */
-.playing-now #main-ui, .playing-now header, .playing-now footer, .search-container { 
+/* OCULTAR INTERFAZ AL REPRODUCIR */
+.playing-now #main-ui, 
+.playing-now header, 
+.playing-now footer, 
+.search-container { 
     display: none !important; 
 }
 
-header { background: var(--rd-red); padding: 15px; color: #fff; text-align: center; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
+header { background: var(--rd-red); padding: 15px; color: #fff; text-align: center; }
 header h1 { font-size: 18px; margin: 0; font-weight: 900; }
 
-.search-container { padding: 10px; background: #f8f8f8; border-bottom: 1px solid var(--rd-border); }
+/* ESTILOS DEL BUSCADOR */
+.search-container { 
+    padding: 12px; 
+    background: #f1f1f1; 
+    border-bottom: 1px solid var(--rd-border); 
+}
 #channelSearch { 
-    width: 100%; padding: 12px; border-radius: 8px; border: 1px solid #ddd; 
-    box-sizing: border-box; font-size: 16px; outline: none;
+    width: 100%; 
+    padding: 12px; 
+    border-radius: 8px; 
+    border: 1px solid #ccc; 
+    box-sizing: border-box; 
+    font-size: 16px;
+    outline: none;
 }
 
+/* TABLA DE CANALES */
 table { width: 100%; border-collapse: collapse; }
 .cat-tag { background: #333; color: #fff; padding: 10px; font-size: 11px; text-transform: uppercase; }
 .channel-row { border-bottom: 1px solid var(--rd-border); }

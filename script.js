@@ -3,26 +3,26 @@ const video = document.getElementById('video');
 const container = document.getElementById('videoContainer');
 const searchInput = document.getElementById('channelSearch');
 let hls;
-let allChannels = [];
+let allChannels = []; // Guardará la lista completa para filtrar
 
-// Carga de datos desde el JSON
+// Cargar configuración y canales
 fetch('config.json')
     .then(res => res.json())
     .then(data => {
         document.getElementById('footer-text').innerText = data.footer_text;
         allChannels = data.channels;
-        renderChannels(allChannels);
+        renderChannels(allChannels); // Carga inicial
     })
     .catch(err => {
-        list.innerHTML = '<tr class="cat-tag"><td colspan="3">Error al cargar canales</td></tr>';
+        list.innerHTML = '<tr class="cat-tag"><td colspan="3">Error cargando canales</td></tr>';
     });
 
-// Función para renderizar la tabla de canales
+// Función para mostrar canales en la tabla
 function renderChannels(channelsToRender) {
     list.innerHTML = '<tr class="cat-tag"><td colspan="3">Canales de Venezuela</td></tr>';
 
     if (channelsToRender.length === 0) {
-        list.innerHTML += '<tr><td colspan="3" style="text-align:center; padding:30px; color:#999;">No se encontraron canales</td></tr>';
+        list.innerHTML += '<tr><td colspan="3" style="text-align:center; padding:20px; color:#999;">No hay resultados</td></tr>';
         return;
     }
 
@@ -52,7 +52,7 @@ function renderChannels(channelsToRender) {
     });
 }
 
-// Lógica del buscador
+// Lógica del BUSCADOR
 searchInput.addEventListener('input', (e) => {
     const term = e.target.value.toLowerCase();
     const filtered = allChannels.filter(ch => 
@@ -61,7 +61,7 @@ searchInput.addEventListener('input', (e) => {
     renderChannels(filtered);
 });
 
-// Reproducción
+// Reproductor HLS
 function playStream(url) {
     if(!url) return;
     document.body.classList.add('playing-now');
@@ -79,7 +79,7 @@ function playStream(url) {
     }
 }
 
-// Detener reproducción
+// Cerrar Reproductor
 function stopStream() {
     document.body.classList.remove('playing-now');
     container.style.display = 'none';
