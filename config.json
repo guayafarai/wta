@@ -2,18 +2,8 @@
   "footer_text": "PlayCast • Televisión en vivo • 2026",
   "channels": [
     {
-      "name": "Televen HD (VIVO)",
-      "url": "https://mediablocks-ve.global.ssl.fastly.net/10255/live/hls/televen/index.m3u8?hdnts=data%3Dip%3D38.248.170.70%2Cid%3DTLV-GUEST%2Cpid%3D255%2Cdid%3DN%2FA%2Csid%3DWBS%7Eacl%3D%2F10255%2Flive%2Fhls%2Fteleven%2F*%7Eexp%3D1776323286%7Ehmac%3D0ff9449e4346c075eeba11ea8b88e7e6e57548467250f1f02e8c8a2f4e06cff3",
-      "is_vip": false
-    },
-    {
       "name": "Venevisión En Vivo (HD)",
       "url": "https://venevision-blocked-cdn.encoders.immergo.tv/master.m3u8",
-      "is_vip": false
-    },
-{
-      "name": "VTV - Venezolana de Televisión",
-      "url": "https://live.eu-north-1a.cf.dmcdn.net/sec2(W8ZQA7HnPCxc6AzMItEYK_ps1_NAULmRBtyH_4PGrPI6t4bH3j36eQojwNEGFMzkHSZ0l70E8-1lfXZvXXPraaQSFD_Rh2MRCN8G6kBqGAGT0yCiGMLvapzCWZh_kOWq)/dm/3/x930kre/d/live-480@60.m3u8",
       "is_vip": false
     },
     {
