@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>IPTV PANEL CONTROL</title>
+    <script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
+    <style>
+        :root { --rd-red: #d90429; --rd-blue: #0077b6; --rd-bg: #ffffff; --rd-border: #eeeeee; }
+        html, body { height: 100%; margin: 0; padding: 0; background: var(--rd-bg); font-family: Arial, sans-serif; }
+        
+        /* MODO CINE */
+        .playing-now #main-ui, .playing-now .ad-top, .playing-now header, .playing-now footer { display: none !important; }
+        
+        #videoContainer { width: 100%; background: #000; display: none; position: relative; }
+        #closePlayer { position: absolute; top: 10px; right: 10px; background: rgba(0,0,0,0.7); color: #fff; border: 1px solid #fff; padding: 8px 15px; border-radius: 5px; z-index: 2000; cursor: pointer; }
+        video { width: 100%; height: auto; max-height: 100vh; }
+
+        /* INTERFAZ */
+        .ad-top { text-align: center; padding: 5px 0; border-bottom: 1px solid var(--rd-red); min-height: 60px; }
+        header { background: var(--rd-red); padding: 12px; color: #fff; text-align: center; }
+        header h1 { font-size: 16px; margin: 0; text-transform: uppercase; }
+        
+        table { width: 100%; border-collapse: collapse; }
+        .cat-tag { background: #333; color: #fff; padding: 6px 15px; font-size: 10px; font-weight: bold; }
+        .channel-row { border-bottom: 1px solid var(--rd-border); }
+        .vip-row { background: #fff9f9; }
+        td { padding: 12px 15px; }
+
+        .channel-link { font-size: 14px; font-weight: bold; color: var(--rd-blue); text-decoration: underline; cursor: pointer; }
+        .btn-play { background: #222; color: #fff; padding: 8px 15px; font-size: 11px; border-radius: 4px; border: none; cursor: pointer; }
+        .btn-vip { background: var(--rd-red); }
+
+        footer { padding: 15px; text-align: center; color: #bbb; font-size: 10px; margin-top: auto; border-top: 1px solid #eee; }
+    </style>
+</head>
+<body>
+
+    <div class="ad-top" id="ad-slot"></div>
+
+    <div id="videoContainer">
+        <button id="closePlayer" onclick="stopStream()">✕ CERRAR</button>
+        <video id="video" controls playsinline></video>
+    </div>
+
+    <header><h1>IPTV EN VIVO</h1></header>
+
+    <div id="main-ui">
+        <table>
+            <tbody id="channel-list">
+                <tr class="cat-tag"><td colspan="3">Cargando canales...</td></tr>
+            </tbody>
+        </table>
+    </div>
+
+    <footer id="footer-text"></footer>
+
+<script>
+    let hls;
+    const video = document.getElementById('video');
+
+    // CARGAR CONFIGURACIÓN DESDE EL JSON
+    fetch('config.json')
+        .then(response => response.json())
+        .then(data => {
+            // Cargar Footer
+            document.getElementById('footer-text').innerText = data.footer_text;
+            // Cargar Ads
+            document.getElementById('ad-slot').innerHTML = `<small style="font-size:8px;color:#ccc">PUBLICIDAD</small>${data.adsterra_html}`;
+            
+            // Cargar Canales
+            const list = document.getElementById('channel-list');
+            list.innerHTML = '<tr class="cat-tag"><td colspan="3">Canales en Vivo</td></tr>';
+            
+            data.channels.forEach(ch => {
+                const row = document.createElement('tr');
+                row.className = `channel-row ${ch.is_vip ? 'vip-row' : ''}`;
+                
+                // Si es VIP (Publicidad), abre en pestaña nueva. Si es canal, abre reproductor.
+                const action = ch.is_vip ? `window.open('${ch.url}', '_blank')` : `playStream('${ch.url}')`;
+                const btnClass = ch.is_vip ? 'btn-play btn-vip' : 'btn-play';
+                const btnText = ch.is_vip ? 'GO' : 'VER';
+
+                row.innerHTML = `
+                    <td style="width:60px; text-align:center; font-weight:bold; color:#777; font-size:11px;">${ch.is_vip ? '⭐' : 'AHORA'}</td>
+                    <td><span class="channel-link" style="${ch.is_vip ? 'color:var(--rd-red)' : ''}" onclick="${action}">${ch.name}</span></td>
+                    <td style="text-align:right"><button class="${btnClass}" onclick="${action}">${btnText}</button></td>
+                `;
+                list.appendChild(row);
+            });
+        });
+
+    function playStream(url) {
+        document.body.classList.add('playing-now');
+        document.getElementById('videoContainer').style.display = 'block';
+        if (Hls.isSupported()) {
+            if (hls) hls.destroy();
+            hls = new Hls();
+            hls.loadSource(url);
+            hls.attachMedia(video);
+            hls.on(Hls.Events.MANIFEST_PARSED, () => video.play());
+        } else {
+            video.src = url;
+            video.play();
+        }
+    }
+
+    function stopStream() {
+        document.body.classList.remove('playing-now');
+        document.getElementById('videoContainer').style.display = 'none';
+        video.pause();
+        video.src = "";
+        if (hls) hls.destroy();
+    }
+</script>
+</body>
+</html>
