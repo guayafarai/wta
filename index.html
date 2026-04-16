@@ -8,26 +8,20 @@
     <style>
         :root { --rd-red: #d90429; --rd-blue: #0077b6; --rd-bg: #ffffff; --rd-border: #eeeeee; }
         html, body { height: 100%; margin: 0; padding: 0; background: var(--rd-bg); font-family: Arial, sans-serif; }
-        
-        /* MODO REPRODUCTOR */
         .playing-now #main-ui, .playing-now header, .playing-now footer { display: none !important; }
         #videoContainer { width: 100%; background: #000; display: none; position: relative; line-height: 0; }
         #closePlayer { position: absolute; top: 10px; right: 10px; background: rgba(0,0,0,0.8); color: #fff; border: 1px solid #fff; padding: 8px 15px; border-radius: 5px; z-index: 2000; cursor: pointer; font-weight: bold; }
         video { width: 100%; height: auto; max-height: 100vh; }
-
         header { background: var(--rd-red); padding: 12px; color: #fff; text-align: center; }
         header h1 { font-size: 16px; margin: 0; text-transform: uppercase; font-weight: 900; }
-        
         table { width: 100%; border-collapse: collapse; }
         .cat-tag { background: #333; color: #fff; padding: 6px 15px; font-size: 10px; font-weight: bold; text-transform: uppercase; }
         .channel-row { border-bottom: 1px solid var(--rd-border); }
-        .vip-row { background: #fffcf0 !important; } /* Color sutil para diferenciar publicidad */
-        
+        .vip-row { background: #fffcf0 !important; }
         td { padding: 12px 15px; vertical-align: middle; }
         .channel-link { font-size: 14px; font-weight: bold; color: var(--rd-blue); text-decoration: underline; cursor: pointer; }
         .btn-play { background: #222; color: #fff; padding: 8px 15px; font-size: 11px; border-radius: 4px; border: none; cursor: pointer; font-weight: bold; }
         .btn-vip { background: var(--rd-red); }
-
         footer { padding: 25px; text-align: center; color: #bbb; font-size: 10px; margin-top: auto; }
     </style>
 </head>
@@ -42,8 +36,7 @@
 
     <div id="main-ui">
         <table>
-            <tbody id="channel-list">
-                </tbody>
+            <tbody id="channel-list"></tbody>
         </table>
     </div>
 
@@ -62,30 +55,22 @@
 
             data.channels.forEach(ch => {
                 const row = document.createElement('tr');
-                
                 if (ch.is_vip) {
-                    // LÓGICA DE PUBLICIDAD CON DISTANCIA RANDOM
                     row.className = 'channel-row vip-row';
-                    const randomPadding = Math.floor(Math.random() * (60 - 20 + 1)) + 20; // Entre 20px y 60px
-                    
+                    const randomPadding = Math.floor(Math.random() * (60 - 20 + 1)) + 20;
                     row.innerHTML = `
                         <td style="width:50px; text-align:center;">⭐</td>
                         <td style="padding-top:${randomPadding}px; padding-bottom:${randomPadding}px;">
                             <span class="channel-link" style="color:var(--rd-red)" onclick="window.open('${ch.url}', '_blank')">${ch.name}</span>
                         </td>
-                        <td style="text-align:right">
-                            <button class="btn-play btn-vip" onclick="window.open('${ch.url}', '_blank')">GO</button>
-                        </td>
+                        <td style="text-align:right"><button class="btn-play btn-vip" onclick="window.open('${ch.url}', '_blank')">GO</button></td>
                     `;
                 } else {
-                    // LÓGICA DE CANAL NORMAL
                     row.className = 'channel-row';
                     row.innerHTML = `
                         <td style="width:50px; text-align:center; font-weight:bold; color:#777; font-size:10px;">LIVE</td>
                         <td><span class="channel-link" onclick="playStream('${ch.url}')">${ch.name}</span></td>
-                        <td style="text-align:right">
-                            <button class="btn-play" onclick="playStream('${ch.url}')">VER</button>
-                        </td>
+                        <td style="text-align:right"><button class="btn-play" onclick="playStream('${ch.url}')">VER</button></td>
                     `;
                 }
                 list.appendChild(row);
@@ -96,7 +81,6 @@
         if(!url) return;
         document.body.classList.add('playing-now');
         document.getElementById('videoContainer').style.display = 'block';
-        window.scrollTo(0,0);
         if (Hls.isSupported()) {
             if (hls) hls.destroy();
             hls = new Hls();
@@ -104,18 +88,18 @@
             hls.attachMedia(video);
             hls.on(Hls.Events.MANIFEST_PARSED, () => video.play());
         } else {
-            video.src = url;
-            video.play();
+            video.src = url; video.play();
         }
     }
 
     function stopStream() {
         document.body.classList.remove('playing-now');
         document.getElementById('videoContainer').style.display = 'none';
-        video.pause();
-        video.src = "";
-        if (hls) hls.destroy();
+        video.pause(); video.src = ""; if (hls) hls.destroy();
     }
 </script>
+
+<script async="async" data-cfasync="false" src="https://pl29162788.profitablecpmratenetwork.com/17/3e/b5/173eb5fab095ceeab6dd66737d0b6d03.js"></script>
+
 </body>
 </html>
