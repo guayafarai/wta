@@ -7,36 +7,54 @@
     <script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
     <style>
         :root { --rd-red: #d90429; --rd-blue: #0077b6; --rd-bg: #ffffff; --rd-border: #eeeeee; }
-        html, body { height: 100%; margin: 0; padding: 0; background: var(--rd-bg); font-family: Arial, sans-serif; }
+        
+        /* REPRODUCTOR PANTALLA COMPLETA TOTAL */
+        #videoContainer { 
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%; 
+            background: #000; display: none; z-index: 9999; 
+            flex-direction: column; justify-content: center; align-items: center;
+        }
+        video { width: 100%; height: auto; max-height: 100%; }
+        
+        /* BOTÓN VOLVER / CERRAR */
+        #closePlayer { 
+            position: absolute; top: 20px; left: 20px; 
+            background: rgba(217, 4, 41, 0.8); color: #fff; border: none; 
+            padding: 10px 20px; border-radius: 50px; cursor: pointer; 
+            font-weight: bold; z-index: 10000; font-size: 14px;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.5);
+        }
+
+        /* INTERFAZ */
+        body { margin: 0; font-family: Arial, sans-serif; background: var(--rd-bg); }
         .playing-now #main-ui, .playing-now header, .playing-now footer { display: none !important; }
-        #videoContainer { width: 100%; background: #000; display: none; position: relative; line-height: 0; }
-        #closePlayer { position: absolute; top: 10px; right: 10px; background: rgba(0,0,0,0.8); color: #fff; border: 1px solid #fff; padding: 8px 15px; border-radius: 5px; z-index: 2000; cursor: pointer; font-weight: bold; }
-        video { width: 100%; height: auto; max-height: 100vh; }
-        header { background: var(--rd-red); padding: 12px; color: #fff; text-align: center; }
-        header h1 { font-size: 16px; margin: 0; text-transform: uppercase; font-weight: 900; }
+        header { background: var(--rd-red); padding: 15px; color: #fff; text-align: center; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
+        header h1 { font-size: 18px; margin: 0; font-weight: 900; }
         table { width: 100%; border-collapse: collapse; }
-        .cat-tag { background: #333; color: #fff; padding: 6px 15px; font-size: 10px; font-weight: bold; text-transform: uppercase; }
+        .cat-tag { background: #333; color: #fff; padding: 10px; font-size: 11px; text-transform: uppercase; }
         .channel-row { border-bottom: 1px solid var(--rd-border); }
         .vip-row { background: #fffcf0 !important; }
-        td { padding: 12px 15px; vertical-align: middle; }
-        .channel-link { font-size: 14px; font-weight: bold; color: var(--rd-blue); text-decoration: underline; cursor: pointer; }
-        .btn-play { background: #222; color: #fff; padding: 8px 15px; font-size: 11px; border-radius: 4px; border: none; cursor: pointer; font-weight: bold; }
+        td { padding: 15px; vertical-align: middle; }
+        .channel-link { font-size: 15px; font-weight: bold; color: var(--rd-blue); text-decoration: none; }
+        .btn-play { background: #222; color: #fff; padding: 10px 18px; border-radius: 5px; border: none; font-weight: bold; }
         .btn-vip { background: var(--rd-red); }
-        footer { padding: 25px; text-align: center; color: #bbb; font-size: 10px; margin-top: auto; }
+        footer { padding: 30px; text-align: center; color: #bbb; font-size: 11px; }
     </style>
 </head>
 <body>
 
     <div id="videoContainer">
-        <button id="closePlayer" onclick="stopStream()">✕ CERRAR REPRODUCTOR</button>
-        <video id="video" controls playsinline></video>
+        <button id="closePlayer" onclick="stopStream()">← VOLVER A LA LISTA</button>
+        <video id="video" controls playsinline crossorigin="anonymous"></video>
     </div>
 
     <header><h1>PLAYCAST LIVE</h1></header>
 
     <div id="main-ui">
         <table>
-            <tbody id="channel-list"></tbody>
+            <tbody id="channel-list">
+                <tr class="cat-tag"><td colspan="3">Sincronizando canales...</td></tr>
+            </tbody>
         </table>
     </div>
 
@@ -45,34 +63,32 @@
 <script>
     const list = document.getElementById('channel-list');
     const video = document.getElementById('video');
+    const container = document.getElementById('videoContainer');
     let hls;
 
     fetch('config.json')
         .then(res => res.json())
         .then(data => {
             document.getElementById('footer-text').innerText = data.footer_text;
-            list.innerHTML = '<tr class="cat-tag"><td colspan="3">Canales Disponibles</td></tr>';
+            list.innerHTML = '<tr class="cat-tag"><td colspan="3">Canales de Venezuela</td></tr>';
 
             data.channels.forEach(ch => {
                 const row = document.createElement('tr');
-                if (ch.is_vip) {
-                    row.className = 'channel-row vip-row';
-                    const randomPadding = Math.floor(Math.random() * (60 - 20 + 1)) + 20;
-                    row.innerHTML = `
-                        <td style="width:50px; text-align:center;">⭐</td>
-                        <td style="padding-top:${randomPadding}px; padding-bottom:${randomPadding}px;">
-                            <span class="channel-link" style="color:var(--rd-red)" onclick="window.open('${ch.url}', '_blank')">${ch.name}</span>
-                        </td>
-                        <td style="text-align:right"><button class="btn-play btn-vip" onclick="window.open('${ch.url}', '_blank')">GO</button></td>
-                    `;
-                } else {
-                    row.className = 'channel-row';
-                    row.innerHTML = `
-                        <td style="width:50px; text-align:center; font-weight:bold; color:#777; font-size:10px;">LIVE</td>
-                        <td><span class="channel-link" onclick="playStream('${ch.url}')">${ch.name}</span></td>
-                        <td style="text-align:right"><button class="btn-play" onclick="playStream('${ch.url}')">VER</button></td>
-                    `;
-                }
+                const isVip = ch.is_vip;
+                row.className = isVip ? 'channel-row vip-row' : 'channel-row';
+                
+                // Distancia random para publicidad
+                const rPad = isVip ? Math.floor(Math.random() * (70 - 30 + 1)) + 30 : 15;
+
+                row.innerHTML = `
+                    <td style="width:40px; text-align:center;">${isVip ? '⭐' : '📺'}</td>
+                    <td style="padding-top:${rPad}px; padding-bottom:${rPad}px;">
+                        <span class="channel-link" style="${isVip ? 'color:var(--rd-red)' : ''}" onclick="${isVip ? `window.open('${ch.url}', '_blank')` : `playStream('${ch.url}')`}">${ch.name}</span>
+                    </td>
+                    <td style="text-align:right">
+                        <button class="btn-play ${isVip ? 'btn-vip' : ''}" onclick="${isVip ? `window.open('${ch.url}', '_blank')` : `playStream('${ch.url}')`}">${isVip ? 'GO' : 'VER'}</button>
+                    </td>
+                `;
                 list.appendChild(row);
             });
         });
@@ -80,7 +96,8 @@
     function playStream(url) {
         if(!url) return;
         document.body.classList.add('playing-now');
-        document.getElementById('videoContainer').style.display = 'block';
+        container.style.display = 'flex';
+        
         if (Hls.isSupported()) {
             if (hls) hls.destroy();
             hls = new Hls();
@@ -88,14 +105,17 @@
             hls.attachMedia(video);
             hls.on(Hls.Events.MANIFEST_PARSED, () => video.play());
         } else {
-            video.src = url; video.play();
+            video.src = url;
+            video.play();
         }
     }
 
     function stopStream() {
         document.body.classList.remove('playing-now');
-        document.getElementById('videoContainer').style.display = 'none';
-        video.pause(); video.src = ""; if (hls) hls.destroy();
+        container.style.display = 'none';
+        video.pause();
+        video.src = "";
+        if (hls) hls.destroy();
     }
 </script>
 
