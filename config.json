@@ -11,6 +11,11 @@
       "url": "https://venevision-blocked-cdn.encoders.immergo.tv/master.m3u8",
       "is_vip": false
     },
+{
+      "name": "VTV - Venezolana de Televisión",
+      "url": "https://live.eu-north-1a.cf.dmcdn.net/sec2(W8ZQA7HnPCxc6AzMItEYK_ps1_NAULmRBtyH_4PGrPI6t4bH3j36eQojwNEGFMzkHSZ0l70E8-1lfXZvXXPraaQSFD_Rh2MRCN8G6kBqGAGT0yCiGMLvapzCWZh_kOWq)/dm/3/x930kre/d/live-480@60.m3u8",
+      "is_vip": false
+    },
     {
       "name": "[AD] Servidor VIP Premium",
       "url": "https://www.profitablecpmratenetwork.com/i6iqy6u5?key=ec86e0751238aa89162637aca7ab9656",
