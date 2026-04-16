@@ -1,39 +1,144 @@
-:root { --rd-red: #d90429; --rd-blue: #0077b6; --rd-bg: #ffffff; --rd-border: #eeeeee; }
-
-body { margin: 0; font-family: Arial, sans-serif; background: var(--rd-bg); }
-
-/* Contenedor del buscador */
-.search-container { 
-    padding: 15px; 
-    background: #f4f4f4; 
-    border-bottom: 2px solid var(--rd-border);
-    display: block !important; /* Forzamos que se vea */
+:root {
+    --primary: #d90429;
+    --primary-dark: #b10322;
+    --accent: #0077b6;
+    --bg-main: #f8f9fa;
+    --bg-card: #ffffff;
+    --text-dark: #2b2d42;
+    --text-light: #8d99ae;
+    --shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
 }
 
-#channelSearch { 
-    width: 100%; 
-    padding: 12px; 
-    border-radius: 8px; 
-    border: 1px solid #ccc; 
+body {
+    margin: 0;
+    font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+    background-color: var(--bg-main);
+    color: var(--text-dark);
+}
+
+/* HEADER PREMIUM */
+header {
+    background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+    padding: 20px;
+    text-align: center;
+    color: #fff;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.2);
+}
+
+header h1 {
+    font-size: 22px;
+    margin: 0;
+    letter-spacing: 1.5px;
+    font-weight: 800;
+}
+
+/* BUSCADOR ESTILIZADO */
+.search-container {
+    padding: 20px;
+    max-width: 600px;
+    margin: -25px auto 10px; /* Eleva el buscador sobre el header */
+    position: relative;
+    z-index: 10;
+}
+
+#channelSearch {
+    width: 100%;
+    padding: 15px 20px;
+    border-radius: 15px;
+    border: none;
+    background: var(--bg-card);
     font-size: 16px;
-    box-sizing: border-box;
+    box-shadow: var(--shadow);
+    outline: none;
+    transition: all 0.3s ease;
 }
 
-/* Ocultar todo cuando el video esté activo */
-.playing-now #main-ui, .playing-now header, .playing-now footer, .playing-now .search-container { 
-    display: none !important; 
+#channelSearch:focus {
+    box-shadow: 0 6px 20px rgba(217, 4, 41, 0.15);
+    transform: translateY(-2px);
 }
 
-/* El resto de tus estilos de tabla y reproductor... */
-#videoContainer { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: #000; display: none; z-index: 9999; flex-direction: column; justify-content: center; align-items: center; }
-video { width: 100%; height: auto; max-height: 100%; }
-#closePlayer { position: absolute; top: 20px; left: 20px; background: rgba(217, 4, 41, 0.8); color: #fff; border: none; padding: 10px 20px; border-radius: 50px; cursor: pointer; z-index: 10000; }
-table { width: 100%; border-collapse: collapse; }
-.cat-tag { background: #333; color: #fff; padding: 10px; font-size: 11px; text-transform: uppercase; }
-.channel-row { border-bottom: 1px solid var(--rd-border); }
-.vip-row { background: #fffcf0 !important; }
-td { padding: 15px; vertical-align: middle; }
-.channel-link { font-size: 15px; font-weight: bold; color: var(--rd-blue); text-decoration: none; cursor: pointer; }
-.btn-play { background: #222; color: #fff; padding: 10px 18px; border-radius: 5px; border: none; font-weight: bold; cursor: pointer; }
-.btn-vip { background: var(--rd-red); }
-footer { padding: 30px; text-align: center; color: #bbb; font-size: 11px; }
+/* TABLA Y FILAS */
+#main-ui {
+    max-width: 800px;
+    margin: 0 auto;
+    padding: 10px;
+}
+
+table {
+    width: 100%;
+    border-collapse: separate;
+    border-spacing: 0 10px; /* Espacio entre filas/tarjetas */
+}
+
+.cat-tag {
+    color: var(--text-light);
+    font-size: 12px;
+    font-weight: bold;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    padding-left: 10px;
+}
+
+.channel-row {
+    background: var(--bg-card);
+    transition: transform 0.2s;
+    box-shadow: var(--shadow);
+}
+
+.channel-row td:first-child { border-radius: 12px 0 0 12px; }
+.channel-row td:last-child { border-radius: 0 12px 12px 0; }
+
+.channel-row:hover {
+    transform: scale(1.01);
+}
+
+.vip-row {
+    background: linear-gradient(to right, #fffcf0, #ffffff);
+    border: 1px solid #ffeeba;
+}
+
+/* BOTONES */
+.btn-play {
+    background: var(--text-dark);
+    color: #fff;
+    padding: 10px 20px;
+    border-radius: 10px;
+    border: none;
+    font-weight: 700;
+    cursor: pointer;
+    transition: opacity 0.2s;
+}
+
+.btn-vip {
+    background: var(--primary);
+}
+
+.btn-play:active { transform: scale(0.95); }
+
+/* REPRODUCTOR */
+#videoContainer {
+    position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+    background: #000; display: none; z-index: 9999;
+}
+
+#closePlayer {
+    position: absolute; top: 30px; left: 20px;
+    background: rgba(0, 0, 0, 0.6);
+    backdrop-filter: blur(5px);
+    color: #fff; border: 1px solid rgba(255,255,255,0.3);
+    padding: 12px 20px; border-radius: 30px; cursor: pointer;
+    font-weight: bold; z-index: 10000;
+}
+
+/* FOOTER */
+footer {
+    padding: 40px;
+    text-align: center;
+    color: var(--text-light);
+    font-size: 13px;
+}
+
+.playing-now .search-container, .playing-now header, .playing-now #main-ui, .playing-now footer {
+    display: none !important;
+}
