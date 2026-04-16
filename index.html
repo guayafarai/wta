@@ -2,7 +2,7 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>PlayCast PRO</title>
     <link rel="stylesheet" href="style.css">
     <script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
@@ -14,15 +14,18 @@
         <video id="video" controls playsinline></video>
     </div>
 
-    <header><h1>PLAYCAST LIVE</h1></header>
+    <header>
+        <h1>PLAYCAST LIVE</h1>
+    </header>
 
     <div class="search-container">
         <input type="text" id="channelSearch" placeholder="🔍 Buscar canal...">
     </div>
 
-    <div id="main-ui">
-        <div id="channel-list"></div>
-    </div>
+    <main id="main-ui">
+        <div id="channel-list">
+            </div>
+    </main>
 
     <script src="script.js"></script>
 </body>

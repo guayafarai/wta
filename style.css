@@ -1,7 +1,6 @@
 :root {
     --primary: #d90429;
     --primary-dark: #b10322;
-    --accent: #0077b6;
     --bg-main: #f8f9fa;
     --bg-card: #ffffff;
     --text-dark: #2b2d42;
@@ -9,62 +8,98 @@
     --shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
 }
 
+* {
+    box-sizing: border-box; /* Evita que el padding desborde los elementos */
+    -webkit-tap-highlight-color: transparent;
+}
+
 body {
     margin: 0;
-    font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+    padding: 0;
+    font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
     background-color: var(--bg-main);
+    overflow-x: hidden; /* Evita scroll horizontal */
 }
 
 /* HEADER */
 header {
     background: linear-gradient(135deg, var(--primary), var(--primary-dark));
-    padding: 30px 20px 60px; /* Más espacio abajo para el buscador */
+    padding: 30px 20px 50px;
     text-align: center;
     color: #fff;
 }
 
-header h1 { font-size: 22px; margin: 0; letter-spacing: 1.5px; font-weight: 800; }
+header h1 { font-size: 1.4rem; margin: 0; letter-spacing: 1px; font-weight: 800; }
 
-/* BUSCADOR RESPONSIVE */
+/* BUSCADOR CORREGIDO */
 .search-container {
-    padding: 0 20px;
+    padding: 0 15px;
+    width: 100%;
     max-width: 500px;
-    margin: -30px auto 20px;
+    margin: -25px auto 20px; /* Posicionamiento sobre el header */
 }
 
 #channelSearch {
     width: 100%;
-    padding: 15px;
+    padding: 14px 20px;
     border-radius: 12px;
     border: none;
     background: var(--bg-card);
     font-size: 16px;
     box-shadow: var(--shadow);
     outline: none;
+    display: block;
 }
 
 /* LISTA DE CANALES */
 #main-ui {
+    width: 100%;
     max-width: 600px;
     margin: 0 auto;
-    padding: 10px;
+    padding: 0 15px 40px;
 }
 
 .channel-card {
     background: var(--bg-card);
-    margin-bottom: 12px;
-    padding: 15px;
-    border-radius: 15px;
+    margin-bottom: 10px;
+    padding: 12px 15px;
+    border-radius: 12px;
     display: flex;
     align-items: center;
     justify-content: space-between;
     box-shadow: var(--shadow);
 }
 
-.channel-info { display: flex; align-items: center; gap: 15px; }
-.channel-name { font-weight: 700; color: var(--text-dark); font-size: 15px; }
+.channel-info { 
+    display: flex; 
+    align-items: center; 
+    gap: 12px; 
+    flex: 1; /* Permite que el texto ocupe el espacio disponible */
+    min-width: 0; /* Necesario para el truncado de texto si es largo */
+}
 
-/* REPRODUCTOR CORREGIDO (RESPONSIVE) */
+.channel-name { 
+    font-weight: 600; 
+    color: var(--text-dark); 
+    font-size: 0.95rem;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+/* BOTÓN DE REPRODUCCIÓN */
+.btn-play {
+    padding: 8px 16px;
+    border-radius: 8px;
+    font-weight: bold;
+    font-size: 0.85rem;
+    border: none;
+    cursor: pointer;
+    margin-left: 10px;
+    flex-shrink: 0; /* Evita que el botón se encoja */
+}
+
+/* REPRODUCTOR RESPONSIVO */
 #videoContainer {
     position: fixed;
     top: 0; left: 0;
@@ -77,25 +112,29 @@ header h1 { font-size: 22px; margin: 0; letter-spacing: 1.5px; font-weight: 800;
 }
 
 video {
-    width: 100% !important;
-    height: auto !important;
-    max-height: 80vh; /* Evita que ocupe toda la pantalla verticalmente */
-    background: #000;
+    width: 100%;
+    max-height: 100%;
+    object-fit: contain; /* Ajusta el video al contenedor sin deformar */
 }
 
 #closePlayer {
     position: absolute;
-    top: 20px; left: 20px;
-    background: rgba(255, 255, 255, 0.2);
-    backdrop-filter: blur(10px);
+    top: env(safe-area-inset-top, 20px); /* Soporte para "notches" en móviles */
+    left: 20px;
+    background: rgba(0, 0, 0, 0.5);
     color: #fff;
-    border: 1px solid rgba(255,255,255,0.3);
-    padding: 10px 20px;
-    border-radius: 50px;
+    border: 1px solid rgba(255,255,255,0.2);
+    padding: 8px 16px;
+    border-radius: 20px;
+    font-size: 0.8rem;
     font-weight: bold;
     z-index: 10001;
+    backdrop-filter: blur(4px);
 }
 
-.playing-now header, .playing-now .search-container, .playing-now #main-ui {
+/* OCULTAR INTERFAZ AL REPRODUCIR */
+.playing-now header, 
+.playing-now .search-container, 
+.playing-now #main-ui {
     display: none !important;
 }
