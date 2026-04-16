@@ -4,14 +4,6 @@
   "categories": ["Todos", "Noticias", "Entretenimiento", "Deportes", "Música", "Internacional"],
   "channels": [
     {
-      "name": "CNN en Español",
-      "category": "Noticias",
-      "country": "US",
-      "url": "https://ds2c506obo7m8.cloudfront.net/v1/master/3722c60a815c199d9c0ef36c5b73da68a62b09d1/cc-7zjq3tdqasbg8/index.m3u8",
-      "is_vip": false,
-      "logo": "https://graph.facebook.com/cnninternational/picture?width=320&height=320"
-    },
-    {
       "name": "Venevisión",
       "category": "Entretenimiento",
       "country": "VE",
@@ -34,14 +26,6 @@
       "url": "https://59d39900ebfb8.streamlock.net/globo-720p/globo-720p/playlist.m3u8",
       "is_vip": false,
       "logo": "https://graph.facebook.com/globovision/picture?width=200&height=200"
-    },
-    {
-      "name": "Televen",
-      "category": "Entretenimiento",
-      "country": "US",
-      "url": "https://d39cdj6x0ssnqk.cloudfront.net/out/v1/ae3f5ad3ac9d4bcfbedc1894a62782b4/index.m3u8",
-      "is_vip": false,
-      "logo": "https://graph.facebook.com/TelevenTV/picture?width=200&height=200"
     },
     {
       "name": "[VIP] Servidor Premium HD",
