@@ -11,7 +11,6 @@ const streamError = document.getElementById('streamError');
 const playerTitle = document.getElementById('playerTitle');
 const footerText  = document.getElementById('footerText');
 
-// Variables de estado
 let hls;
 let dashPlayer;
 let allChannels    = [];
@@ -20,10 +19,9 @@ let currentView    = localStorage.getItem('playcast_view') || 'list';
 let favorites      = JSON.parse(localStorage.getItem('playcast_favs') || '[]');
 let lastStreamUrl  = '';
 
-/* ── Inicializar vista ── */
+/* ── Inicialización ── */
 applyView(currentView);
 
-/* ── Cargar configuración ── */
 fetch('config.json')
     .then(r => r.json())
     .then(data => {
@@ -33,10 +31,10 @@ fetch('config.json')
         renderChannels(allChannels);
     })
     .catch(() => {
-        list.innerHTML = '<div style="text-align:center;padding:40px;color:#6b7280;">Error al cargar canales. Verifica config.json</div>';
+        list.innerHTML = '<div style="text-align:center;padding:40px;color:#6b7280;">Error al cargar canales.</div>';
     });
 
-/* ── Lógica de Reproducción (M3U8, DASH, IFRAME) ── */
+/* ── Lógica de Reproducción Profesional ── */
 async function playStream(url, name) {
     if (!url) return;
     lastStreamUrl = url;
@@ -47,12 +45,15 @@ async function playStream(url, name) {
     const isIframe = url.includes('youtube.com') || url.includes('facebook.com') || url.includes('embed') || url.endsWith('.html');
     const isDash = url.endsWith('.mpd');
 
-    // Resetear estados
+    // Limpieza de estados anteriores para evitar fugas de memoria
     video.style.display = 'none';
     iframe.style.display = 'none';
     iframe.src = '';
-    if (hls) hls.destroy();
-    if (dashPlayer) dashPlayer.reset();
+    video.pause();
+    video.src = '';
+
+    if (hls) { hls.destroy(); hls = null; }
+    if (dashPlayer) { dashPlayer.reset(); dashPlayer = null; }
 
     if (isIframe) {
         iframe.src = url;
@@ -61,6 +62,7 @@ async function playStream(url, name) {
         video.style.display = 'block';
         if (isDash) {
             dashPlayer = dash.Factory.create().initialize(video, url, true);
+            dashPlayer.on(dashjs.MediaPlayer.events.ERROR, () => showStreamError());
         } else if (url.includes('.m3u8')) {
             setupHLS(url);
         } else {
@@ -68,8 +70,7 @@ async function playStream(url, name) {
             video.play().catch(() => showStreamError());
         }
     }
-
-    manejarPantallaCompleta();
+    activarModoCine();
 }
 
 function setupHLS(url) {
@@ -85,7 +86,7 @@ function setupHLS(url) {
     }
 }
 
-async function manejarPantallaCompleta() {
+async function activarModoCine() {
     try {
         if (container.requestFullscreen) await container.requestFullscreen();
         else if (container.webkitRequestFullscreen) await container.webkitRequestFullscreen();
@@ -93,7 +94,7 @@ async function manejarPantallaCompleta() {
         if (window.screen.orientation && /Android|iPhone|iPad|iPod/i.test(navigator.userAgent)) {
             await screen.orientation.lock('landscape').catch(() => {});
         }
-    } catch (e) { console.warn("Fullscreen no disponible"); }
+    } catch (e) { console.warn("Modo cine no disponible"); }
 }
 
 function stopStream() {
@@ -101,7 +102,6 @@ function stopStream() {
     video.pause();
     video.src = '';
     iframe.src = '';
-    
     if (hls) { hls.destroy(); hls = null; }
     if (dashPlayer) { dashPlayer.reset(); dashPlayer = null; }
 
@@ -109,12 +109,10 @@ function stopStream() {
         if (document.exitFullscreen) document.exitFullscreen();
         else if (document.webkitExitFullscreen) document.webkitExitFullscreen();
     }
-    if (window.screen.orientation && screen.orientation.unlock) {
-        screen.orientation.unlock();
-    }
+    if (window.screen.orientation && screen.orientation.unlock) screen.orientation.unlock();
 }
 
-/* ── UI y Renderizado ── */
+/* ── UI y Favoritos ── */
 function renderCategories(cats) {
     catContainer.innerHTML = '';
     const allCats = favorites.length > 0 ? ['Todos', '⭐ Favoritos', ...cats.filter(c => c !== 'Todos')] : cats;
@@ -123,12 +121,12 @@ function renderCategories(cats) {
         const btn = document.createElement('button');
         btn.className = 'cat-btn' + (cat === activeCategory ? ' active' : '');
         btn.textContent = cat;
-        btn.addEventListener('click', () => {
+        btn.onclick = () => {
             activeCategory = cat;
             document.querySelectorAll('.cat-btn').forEach(b => b.classList.remove('active'));
             btn.classList.add('active');
             filterAndRender();
-        });
+        };
         catContainer.appendChild(btn);
     });
 }
@@ -143,9 +141,7 @@ function renderChannels(channels) {
         card.className = 'channel-card' + (ch.is_vip ? ' is-vip' : '');
 
         const emoji = getCategoryEmoji(ch.category);
-        const logoHTML = ch.logo
-            ? `<img src="${ch.logo}" alt="${ch.name}" onerror="this.parentElement.textContent='${emoji}'">`
-            : emoji;
+        const logoHTML = ch.logo ? `<img src="${ch.logo}" alt="${ch.name}" onerror="this.parentElement.textContent='${emoji}'">` : emoji;
 
         card.innerHTML = `
             <div class="channel-logo">${logoHTML}</div>
@@ -157,8 +153,7 @@ function renderChannels(channels) {
                 </div>
             </div>
             <div class="card-actions">
-                <button class="btn-fav ${isFav ? 'active' : ''}" 
-                    onclick="toggleFav(this, '${escapeAttr(ch.url)}')">★</button>
+                <button class="btn-fav ${isFav ? 'active' : ''}" onclick="toggleFav(this, '${escapeAttr(ch.url)}')">★</button>
                 <button class="btn-play ${ch.is_vip ? 'vip' : ''}" 
                     onclick="${ch.is_vip ? `window.open('${escapeAttr(ch.url)}', '_blank')` : `playStream('${escapeAttr(ch.url)}', '${escapeAttr(ch.name)}')`}">
                     ${ch.is_vip ? 'PREMIUM' : 'VER'}
@@ -167,6 +162,18 @@ function renderChannels(channels) {
         `;
         list.appendChild(card);
     });
+}
+
+function toggleFav(btn, url) {
+    const idx = favorites.indexOf(url);
+    if (idx === -1) favorites.push(url);
+    else favorites.splice(idx, 1);
+    localStorage.setItem('playcast_favs', JSON.stringify(favorites));
+    
+    // Actualización instantánea sin recarga de página
+    const currentCats = Array.from(document.querySelectorAll('.cat-btn')).map(b => b.textContent.replace('⭐ ', ''));
+    renderCategories(currentCats);
+    filterAndRender();
 }
 
 function filterAndRender() {
@@ -181,16 +188,9 @@ function filterAndRender() {
     renderChannels(filtered);
 }
 
-function toggleFav(btn, url) {
-    const idx = favorites.indexOf(url);
-    if (idx === -1) favorites.push(url);
-    else favorites.splice(idx, 1);
-    localStorage.setItem('playcast_favs', JSON.stringify(favorites));
-    location.reload(); // Recarga simple para actualizar UI de favoritos
-}
-
 function showStreamError() {
     video.style.display = 'none';
+    iframe.style.display = 'none';
     streamError.classList.add('visible');
 }
 
@@ -212,6 +212,11 @@ function applyView(view) {
     if (btn) btn.textContent = view === 'grid' ? '☰' : '⊞';
 }
 
+function clearSearch() {
+    searchInput.value = '';
+    filterAndRender();
+}
+
 function getCategoryEmoji(cat) {
     const map = { 'Noticias': '📰', 'Entretenimiento': '🎬', 'Deportes': '⚽', 'Música': '🎵', 'Internacional': '🌐' };
     return map[cat] || '📺';
@@ -221,4 +226,7 @@ function escapeAttr(str) {
     return str ? str.replace(/'/g, "\\'").replace(/"/g, '&quot;') : '';
 }
 
-searchInput.addEventListener('input', () => filterAndRender());
+searchInput.addEventListener('input', () => {
+    clearBtn.classList.toggle('visible', searchInput.value.length > 0);
+    filterAndRender();
+});

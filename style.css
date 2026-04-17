@@ -528,3 +528,56 @@ footer {
     top: 0;
     left: 0;
 }
+/* --- Sistema de Capas del Reproductor --- */
+#videoContainer {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: #000;
+    z-index: 9999;
+    flex-direction: column;
+}
+
+#playerTopBar {
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    padding: 15px;
+    background: linear-gradient(to bottom, rgba(0,0,0,0.9), transparent);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    z-index: 10005; /* Siempre arriba del video e iframe */
+}
+
+#video, #iframePlayer {
+    width: 100%;
+    height: 100%;
+    border: none;
+    background: #000;
+    position: absolute;
+    top: 0; left: 0;
+    object-fit: contain;
+}
+
+#video { z-index: 10000; }
+#iframePlayer { z-index: 10001; display: none; }
+
+#streamError {
+    z-index: 10010;
+    display: none;
+    position: absolute;
+    inset: 0;
+    background: var(--bg);
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+}
+#streamError.visible { display: flex; }
+
+/* Corrección de Visibilidad en Favoritos */
+.btn-fav.active {
+    background: rgba(245,166,35,0.15) !important;
+    color: var(--vip-gold) !important;
+    border-color: var(--vip-gold) !important;
+}
