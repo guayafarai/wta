@@ -4,6 +4,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>PlayCast PRO</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="style.css">
     <script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/shaka-player/4.3.5/shaka-player.compiled.debug.js"></script>
@@ -12,14 +14,18 @@
 
     <div id="videoContainer">
         <div id="playerTopBar">
-            <button id="closePlayer" onclick="stopStream()">✕ Cerrar</button>
+            <button id="closePlayer" onclick="stopStream()">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="15 18 9 12 15 6"/></svg>
+                Cerrar
+            </button>
             <span id="playerTitle">—</span>
             <div id="liveIndicator"><span class="pulse-dot"></span> EN VIVO</div>
         </div>
         <video id="video" playsinline></video>
-        <iframe id="embedPlayer" allow="autoplay; fullscreen" style="display:none; border:none; width:100%; height:100%;"></iframe>
+        <iframe id="embedPlayer" allow="autoplay; fullscreen" style="display:none; width:100%; height:100%; border:none;"></iframe>
         <div id="streamError">
-            <p>⚠️ Error de conexión</p>
+            <div class="error-icon">📡</div>
+            <p>No se pudo conectar al canal</p>
             <button onclick="retryStream()">Reintentar</button>
         </div>
     </div>
@@ -28,15 +34,20 @@
         <div class="header-inner">
             <div class="brand">
                 <span class="brand-logo">▶</span>
-                <span class="brand-name">PLAYCAST PRO</span>
+                <span class="brand-name">PLAYCAST</span>
+                <span class="brand-badge">PRO</span>
             </div>
-            <button class="icon-btn" onclick="toggleView()">⊞</button>
+            <div class="header-actions">
+                <button class="icon-btn" id="viewToggleBtn" onclick="toggleView()">⊞</button>
+            </div>
         </div>
     </header>
 
     <div class="search-container">
         <div class="search-box">
-            <input type="text" id="channelSearch" placeholder="Buscar canal..." oninput="filterAndRender()">
+            <svg class="search-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+            <input type="text" id="channelSearch" placeholder="Buscar canal...">
+            <button id="clearSearch" onclick="clearSearch()">✕</button>
         </div>
     </div>
 
@@ -44,7 +55,15 @@
 
     <main id="main-ui">
         <div id="channel-list" class="list-view"></div>
+        <div id="emptyState" style="display:none;">
+            <div class="empty-icon">📺</div>
+            <p>No se encontraron canales</p>
+        </div>
     </main>
+
+    <footer id="appFooter">
+        <span id="footerText"></span>
+    </footer>
 
     <script src="script.js"></script>
 </body>

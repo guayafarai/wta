@@ -3,17 +3,30 @@
     --bg: #0d0f14;
     --bg-card: #181b24;
     --text: #e8eaf0;
+    --text-dim: #6b7280;
     --radius: 12px;
+    --font-display: 'Bebas Neue', sans-serif;
+    --font-body: 'DM Sans', sans-serif;
 }
 
 body {
-    font-family: sans-serif;
+    font-family: var(--font-body);
     background: var(--bg);
     color: var(--text);
     margin: 0;
 }
 
-/* Contenedor Fullscreen */
+/* HEADER Y MARCA */
+header {
+    background: #13161e;
+    padding: 14px 20px;
+    border-bottom: 1px solid rgba(255,255,255,0.06);
+}
+.header-inner { display: flex; justify-content: space-between; align-items: center; max-width: 900px; margin: 0 auto; }
+.brand-name { font-family: var(--font-display); font-size: 1.5rem; letter-spacing: 2px; }
+.brand-badge { background: var(--red); font-size: 0.6rem; padding: 2px 5px; border-radius: 4px; vertical-align: top; }
+
+/* REPRODUCTOR FULLSCREEN */
 #videoContainer {
     position: fixed;
     inset: 0;
@@ -22,50 +35,33 @@ body {
     flex-direction: column;
     z-index: 9999;
 }
-
-#video, #embedPlayer {
-    flex: 1;
-    background: #000;
+#video, #embedPlayer { width: 100%; height: 100%; object-fit: contain; }
+#playerTopBar {
+    position: absolute;
+    top: 0; width: 100%;
+    padding: 15px;
+    background: linear-gradient(to bottom, rgba(0,0,0,0.8), transparent);
+    display: flex; align-items: center; gap: 10px; z-index: 10;
 }
+#closePlayer { background: rgba(255,255,255,0.2); color: #fff; border: none; padding: 8px 15px; border-radius: 20px; cursor: pointer; }
 
-header {
-    background: #13161e;
-    padding: 15px 20px;
-    border-bottom: 1px solid rgba(255,255,255,0.1);
-}
-
-.brand-name {
-    font-weight: bold;
-    letter-spacing: 2px;
-    color: var(--text);
-}
-
-.search-container { padding: 20px; }
-#channelSearch {
-    width: 100%;
-    padding: 12px;
-    border-radius: var(--radius);
-    background: var(--bg-card);
-    border: 1px solid rgba(255,255,255,0.1);
-    color: #fff;
-}
+/* BUSCADOR Y LISTA */
+.search-container { max-width: 900px; margin: 20px auto; padding: 0 20px; }
+#channelSearch { width: 100%; background: var(--bg-card); border: 1px solid rgba(255,255,255,0.1); border-radius: var(--radius); padding: 12px 40px; color: #fff; outline: none; }
+.search-box { position: relative; }
+.search-icon { position: absolute; left: 12px; top: 12px; color: var(--text-dim); }
 
 .channel-card {
     background: var(--bg-card);
-    margin: 10px 20px;
-    padding: 15px;
     border-radius: var(--radius);
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
+    padding: 15px;
+    margin-bottom: 10px;
+    display: flex; align-items: center; justify-content: space-between;
+    border: 1px solid rgba(255,255,255,0.05);
 }
+.btn-play { background: var(--red); color: #fff; border: none; padding: 10px 20px; border-radius: 8px; font-weight: bold; cursor: pointer; }
 
-.btn-play {
-    background: var(--red);
-    color: white;
-    border: none;
-    padding: 8px 20px;
-    border-radius: 8px;
-    font-weight: bold;
-    cursor: pointer;
-}
+/* Categorías */
+.categories-container { display: flex; gap: 10px; overflow-x: auto; padding: 0 20px; margin-bottom: 20px; scrollbar-width: none; }
+.cat-btn { background: var(--bg-card); border: 1px solid rgba(255,255,255,0.1); color: var(--text-dim); padding: 8px 16px; border-radius: 20px; white-space: nowrap; cursor: pointer; }
+.cat-btn.active { background: var(--red); color: #fff; border-color: var(--red); }
