@@ -507,9 +507,24 @@ footer {
     #channel-list.grid-view { grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); }
 }
 #iframePlayer {
-    display: none; /* Se activa solo cuando el canal es un embed */
+    display: none;
     width: 100%;
     height: 100%;
     border: none;
     background: #000;
+    position: absolute;
+    top: 0;
+    left: 0;
+    z-index: 10000; /* Asegura que esté sobre el fondo negro pero bajo la barra superior */
+}
+
+/* Asegura que el video también sea absoluto para intercambiarse con el iframe */
+#video {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+    background: #000;
+    position: absolute;
+    top: 0;
+    left: 0;
 }
