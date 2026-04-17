@@ -47,7 +47,7 @@
       "name": "TUDN",
       "category": "Deportes",
       "country": "ES",
-      "url": "<iframe src="https://embed.ksdjugfsddeports.com/embed/tudn.html" width="100%" height="100%"  scrolling="no" frameborder="0" allowfullscreen="true"></iframe>",
+      "url": "https://embed.ksdjugfsddeports.com/embed/tudn.html",
       "is_vip": false,
       "logo": ""
     }
