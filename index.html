@@ -8,31 +8,32 @@
     <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="style.css">
     <script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/shaka-player/4.3.5/shaka-player.compiled.debug.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/dashjs@latest/dist/dash.all.min.js"></script>
 </head>
 <body>
 
-    <div id="videoContainer">
-        <div id="playerTopBar">
-            <button id="closePlayer" onclick="stopStream()">
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="15 18 9 12 15 6"/></svg>
-                Cerrar
-            </button>
-            <span id="playerTitle">—</span>
-            <div id="liveIndicator"><span class="pulse-dot"></span> EN VIVO</div>
-        </div>
-        
-        <video id="video" controls playsinline></video>
-        
-        <iframe id="embedPlayer" allow="autoplay; fullscreen" style="display:none; width:100%; height:100%; border:none;"></iframe>
-
-        <div id="streamError">
-            <div class="error-icon">📡</div>
-            <p>No se pudo conectar al canal</p>
-            <button onclick="retryStream()">Reintentar</button>
-        </div>
+    <!-- REPRODUCTOR -->
+<div id="videoContainer">
+    <div id="playerTopBar">
+        <button id="closePlayer" onclick="stopStream()">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="15 18 9 12 15 6"/></svg>
+            Cerrar
+        </button>
+        <span id="playerTitle">—</span>
+        <div id="liveIndicator"><span class="pulse-dot"></span> EN VIVO</div>
     </div>
+    
+    <video id="video" controls playsinline></video>
+    <iframe id="iframePlayer" allowfullscreen allow="autoplay; encrypted-media; picture-in-picture"></iframe>
 
+    <div id="streamError">
+        <div class="error-icon">📡</div>
+        <p>No se pudo conectar al canal</p>
+        <button onclick="retryStream()">Reintentar</button>
+    </div>
+</div>
+
+    <!-- HEADER -->
     <header>
         <div class="header-inner">
             <div class="brand">
@@ -46,6 +47,7 @@
         </div>
     </header>
 
+    <!-- BUSCADOR -->
     <div class="search-container">
         <div class="search-box">
             <svg class="search-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
@@ -54,8 +56,12 @@
         </div>
     </div>
 
-    <div class="categories-container" id="categoriesContainer"></div>
+    <!-- CATEGORÍAS -->
+    <div class="categories-container" id="categoriesContainer">
+        <!-- generadas por JS -->
+    </div>
 
+    <!-- LISTA / GRID -->
     <main id="main-ui">
         <div id="channel-list" class="list-view"></div>
         <div id="emptyState" style="display:none;">
@@ -64,6 +70,7 @@
         </div>
     </main>
 
+    <!-- FOOTER -->
     <footer id="appFooter">
         <span id="footerText"></span>
     </footer>

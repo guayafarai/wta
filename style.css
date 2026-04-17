@@ -506,3 +506,10 @@ footer {
 @media (min-width: 700px) {
     #channel-list.grid-view { grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); }
 }
+#iframePlayer {
+    display: none; /* Se activa solo cuando el canal es un embed */
+    width: 100%;
+    height: 100%;
+    border: none;
+    background: #000;
+}
