@@ -1,6 +1,7 @@
 /* ── Estado global ── */
 const list        = document.getElementById('channel-list');
 const video       = document.getElementById('video');
+const iframe      = document.getElementById('iframePlayer'); // Nueva referencia
 const container   = document.getElementById('videoContainer');
 const searchInput = document.getElementById('channelSearch');
 const clearBtn    = document.getElementById('clearSearch');
@@ -10,32 +11,41 @@ const streamError = document.getElementById('streamError');
 const playerTitle = document.getElementById('playerTitle');
 const footerText  = document.getElementById('footerText');
 
+// Variables de estado
+let hls;
 let dashPlayer;
+let allChannels    = [];
+let activeCategory = 'Todos';
+let currentView    = localStorage.getItem('playcast_view') || 'list';
+let favorites      = JSON.parse(localStorage.getItem('playcast_favs') || '[]');
+let lastStreamUrl  = '';
 
+/* ── Lógica de Reproducción (M3U8, DASH, IFRAME) ── */
 async function playStream(url, name) {
     if (!url) return;
     lastStreamUrl = url;
     playerTitle.textContent = name || 'En vivo';
     container.style.display = 'flex';
+    streamError.classList.remove('visible');
     
-    const isIframe = url.includes('youtube.com') || url.includes('facebook.com') || url.endsWith('.html') || url.includes('embed');
+    const isIframe = url.includes('youtube.com') || url.includes('facebook.com') || url.includes('embed') || url.endsWith('.html');
     const isDash = url.endsWith('.mpd');
 
     // Resetear estados
     video.style.display = 'none';
-    document.getElementById('iframePlayer').style.display = 'none';
+    iframe.style.display = 'none';
+    iframe.src = '';
     if (hls) hls.destroy();
     if (dashPlayer) dashPlayer.reset();
 
     if (isIframe) {
-        const frame = document.getElementById('iframePlayer');
-        frame.src = url;
-        frame.style.display = 'block';
+        iframe.src = url;
+        iframe.style.display = 'block';
     } else {
         video.style.display = 'block';
         if (isDash) {
             dashPlayer = dash.Factory.create().initialize(video, url, true);
-        } else if (url.endsWith('.m3u8')) {
+        } else if (url.includes('.m3u8')) {
             setupHLS(url);
         } else {
             video.src = url;
@@ -43,47 +53,46 @@ async function playStream(url, name) {
         }
     }
 
-    // --- FULLSCREEN & ORIENTATION ---
-    try {
-        if (container.requestFullscreen) {
-            await container.requestFullscreen();
-        } else if (container.webkitRequestFullscreen) {
-            await container.webkitRequestFullscreen();
-        }
-
-        // Bloquear orientación horizontal solo en móviles
-        if (window.screen.orientation && /Android|iPhone|iPad|iPod/i.test(navigator.userAgent)) {
-            await screen.orientation.lock('landscape').catch(err => console.log("Orientación no bloqueada:", err));
-        }
-    } catch (e) {
-        console.log("Fullscreen no disponible");
-    }
+    // Fullscreen y Orientación en Móviles
+    manejarPantallaCompleta();
 }
 
 function setupHLS(url) {
     if (Hls.isSupported()) {
-        hls = new Hls();
+        hls = new Hls({ enableWorker: true });
         hls.loadSource(url);
         hls.attachMedia(video);
-        hls.on(Hls.Events.MANIFEST_PARSED, () => video.play());
+        hls.on(Hls.Events.MANIFEST_PARSED, () => video.play().catch(() => {}));
+        hls.on(Hls.Events.ERROR, (_, data) => { if (data.fatal) showStreamError(); });
     } else if (video.canPlayType('application/vnd.apple.mpegurl')) {
         video.src = url;
-        video.play();
+        video.play().catch(() => showStreamError());
     }
+}
+
+async function manejarPantallaCompleta() {
+    try {
+        if (container.requestFullscreen) await container.requestFullscreen();
+        else if (container.webkitRequestFullscreen) await container.webkitRequestFullscreen();
+
+        if (window.screen.orientation && /Android|iPhone|iPad|iPod/i.test(navigator.userAgent)) {
+            await screen.orientation.lock('landscape').catch(() => {});
+        }
+    } catch (e) { console.warn("Fullscreen no disponible"); }
 }
 
 function stopStream() {
     container.style.display = 'none';
     video.pause();
     video.src = '';
-    document.getElementById('iframePlayer').src = '';
+    iframe.src = '';
     
-    if (hls) hls.destroy();
-    if (dashPlayer) dashPlayer.reset();
+    if (hls) { hls.destroy(); hls = null; }
+    if (dashPlayer) { dashPlayer.reset(); dashPlayer = null; }
 
-    // Salir de pantalla completa y liberar orientación
-    if (document.fullscreenElement) {
-        document.exitFullscreen();
+    if (document.fullscreenElement || document.webkitFullscreenElement) {
+        if (document.exitFullscreen) document.exitFullscreen();
+        else if (document.webkitExitFullscreen) document.webkitExitFullscreen();
     }
     if (window.screen.orientation && screen.orientation.unlock) {
         screen.orientation.unlock();
