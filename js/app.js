@@ -193,7 +193,11 @@ async function registerSW() {
   if (!('serviceWorker' in navigator)) return;
 
   try {
-    const reg = await navigator.serviceWorker.register('/sw.js');
+    // Detect base path automatically (works in root AND GitHub Pages subdirs like /wta/)
+    // e.g. guayafarai.github.io/wta/ → scope = /wta/
+    const swPath = new URL('sw.js', document.baseURI).href;
+    const scope  = new URL('./', document.baseURI).pathname;
+    const reg = await navigator.serviceWorker.register(swPath, { scope });
     console.log('[SW] Registered:', reg.scope);
 
     // Handle messages from SW (e.g. NAVIGATE command)

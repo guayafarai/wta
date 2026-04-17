@@ -61,6 +61,7 @@ const PlayerModule = (() => {
 
     lastUrl  = url;
     lastName = name || 'En vivo';
+    proxyIndex = 0; // reset proxy en cada nueva reproducción
 
     if (channelNameEl) channelNameEl.textContent = lastName;
 
@@ -68,16 +69,23 @@ const PlayerModule = (() => {
     showLoading(true);
     showError(false);
 
-    const isIframe = /youtube\.com|youtu\.be|facebook\.com|\/embed\/|\.html$/i.test(url);
-    const isDash   = /\.mpd$/i.test(url);
-    const isHLS    = /\.m3u8/i.test(url);
+    // Detectar tipo de fuente
+    const isIframe = /youtube\.com|youtu\.be|facebook\.com|twitch\.tv|dailymotion\.com|\/embed\/|\.html$/i.test(url);
+    const isDash   = /\.mpd($|\?)/i.test(url);
+    const isHLS    = /\.m3u8($|\?)/i.test(url);
+    const isRTMP   = /^rtmp/i.test(url);
+
+    if (isRTMP) {
+      showError('RTMP no soportado en navegadores. Usa un URL .m3u8 o .mpd');
+      return;
+    }
 
     if (isIframe) {
       _playIframe(url);
     } else if (isDash) {
       _playDash(url);
     } else if (isHLS) {
-      _playHLS(url);
+      _playHLS(url, false);
     } else {
       _playDirect(url);
     }
@@ -110,28 +118,65 @@ const PlayerModule = (() => {
     clearOverlayTimer();
   }
 
+  // ── CORS Proxy list (intentados en orden si el primero falla) ──
+  // Puedes añadir tu propio proxy aquí. Formato: fn(url) => url_proxificada
+  const CORS_PROXIES = [
+    null, // intento directo primero
+    url => `https://corsproxy.io/?${encodeURIComponent(url)}`,
+    url => `https://api.allorigins.win/raw?url=${encodeURIComponent(url)}`,
+  ];
+  let proxyIndex = 0;
+
+  function _applyProxy(url) {
+    if (proxyIndex === 0) return url; // directo
+    const fn = CORS_PROXIES[proxyIndex];
+    return fn ? fn(url) : url;
+  }
+
   // ── Playback methods ──────────────────────────────
-  function _playHLS(url) {
+  function _playHLS(url, retryAsProxy = false) {
     videoEl.style.display = 'block';
 
+    // Si venimos de un retry, incrementar índice de proxy
+    if (retryAsProxy) {
+      proxyIndex = Math.min(proxyIndex + 1, CORS_PROXIES.length - 1);
+    } else {
+      proxyIndex = 0;
+    }
+
+    const srcUrl = _applyProxy(url);
+
     if (typeof Hls !== 'undefined' && Hls.isSupported()) {
+      if (hlsInstance) { hlsInstance.destroy(); hlsInstance = null; }
+
       hlsInstance = new Hls({
         enableWorker: true,
         lowLatencyMode: true,
-        backBufferLength: 30
+        backBufferLength: 30,
+        xhrSetup(xhr) {
+          // Añadir header origin si el proxy lo necesita
+          xhr.withCredentials = false;
+        }
       });
-      hlsInstance.loadSource(url);
+      hlsInstance.loadSource(srcUrl);
       hlsInstance.attachMedia(videoEl);
       hlsInstance.on(Hls.Events.MANIFEST_PARSED, () => {
         showLoading(false);
         videoEl.play().catch(() => {});
       });
       hlsInstance.on(Hls.Events.ERROR, (_, data) => {
-        if (data.fatal) showError('Error de conexión HLS');
+        if (!data.fatal) return;
+        // Intentar con proxy si hay más opciones disponibles
+        if (proxyIndex < CORS_PROXIES.length - 1) {
+          console.warn(`[Player] HLS directo falló, intentando proxy ${proxyIndex + 1}...`);
+          _playHLS(url, true);
+        } else {
+          showError('Sin señal — el canal puede estar fuera de aire o bloqueado por CORS');
+        }
       });
     } else if (videoEl.canPlayType('application/vnd.apple.mpegurl')) {
       // Native HLS (Safari/iOS)
-      videoEl.src = url;
+      videoEl.src = srcUrl;
       videoEl.addEventListener('loadedmetadata', () => {
         showLoading(false);
         videoEl.play().catch(() => {});
