@@ -1,4 +1,4 @@
-/* ... (Manten tus estilos anteriores y añade/ajusta estos) ... */
+/* ... (Manten tus variables :root anteriores) ... */
 
 #videoContainer {
     position: fixed;
@@ -12,21 +12,28 @@
 }
 
 #video, #embedPlayer {
-    flex: 1;
     width: 100%;
     height: 100%;
     object-fit: contain;
+    background: #000;
+}
+
+#playerTopBar {
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    padding: 20px;
+    background: linear-gradient(to bottom, rgba(0,0,0,0.8), transparent);
+    display: flex;
+    align-items: center;
+    z-index: 10;
+}
+
+#closePlayer {
+    background: rgba(255,255,255,0.2);
+    color: #fff;
     border: none;
-}
-
-/* Ocultar barra superior en fullscreen tras unos segundos (opcional) */
-#videoContainer:fullscreen #playerTopBar {
-    background: linear-gradient(to bottom, rgba(0,0,0,0.9), transparent);
-}
-
-/* Ajustes para dispositivos móviles */
-@media (orientation: landscape) {
-    #playerTopBar {
-        padding: 10px 40px; /* Más espacio a los lados en horizontal */
-    }
+    padding: 8px 15px;
+    border-radius: 20px;
+    cursor: pointer;
+    font-weight: bold;
 }

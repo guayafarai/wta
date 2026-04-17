@@ -7,7 +7,6 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="style.css">
-    
     <script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/shaka-player/4.3.5/shaka-player.compiled.debug.js"></script>
 </head>
@@ -24,7 +23,7 @@
         </div>
         
         <video id="video" playsinline></video>
-        <iframe id="embedPlayer" allow="autoplay; fullscreen" style="display:none;"></iframe>
+        <iframe id="embedPlayer" allow="autoplay; fullscreen" style="display:none; width:100%; height:100%; border:none;"></iframe>
 
         <div id="streamError">
             <div class="error-icon">📡</div>
@@ -63,7 +62,7 @@
     </main>
 
     <footer id="appFooter">
-        <span id="footerText">PlayCast • 2026</span>
+        <span id="footerText"></span>
     </footer>
 
     <script src="script.js"></script>

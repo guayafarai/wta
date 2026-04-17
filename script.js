@@ -11,7 +11,6 @@ let shakaInstance;
 let allChannels = [];
 let lastStream = { url: '', name: '', type: '' };
 
-// Configuración inicial de Shaka
 shaka.polyfill.installAll();
 
 fetch('config.json')
@@ -24,6 +23,7 @@ fetch('config.json')
     });
 
 async function playStream(url, name, type) {
+    if (!url) return;
     lastStream = { url, name, type };
     playerTitle.textContent = name;
     container.style.display = 'flex';
@@ -31,32 +31,29 @@ async function playStream(url, name, type) {
 
     // --- PANTALLA COMPLETA Y ROTACIÓN ---
     try {
-        if (container.requestFullscreen) {
-            await container.requestFullscreen();
-        } else if (container.webkitRequestFullscreen) {
-            await container.webkitRequestFullscreen();
-        }
+        if (container.requestFullscreen) await container.requestFullscreen();
+        else if (container.webkitRequestFullscreen) await container.webkitRequestFullscreen();
         
         if (screen.orientation && screen.orientation.lock) {
             await screen.orientation.lock('landscape').catch(() => {});
         }
-    } catch (e) { console.warn("Fullscreen no disponible"); }
+    } catch (e) { console.warn("Fullscreen bloqueado por el navegador"); }
 
-    // Limpiar reproductores previos
+    // Limpieza de estados
     video.style.display = 'none';
     embedPlayer.style.display = 'none';
     embedPlayer.src = '';
-    if (hls) hls.destroy();
-    if (shakaInstance) await shakaInstance.destroy();
+    if (hls) { hls.destroy(); hls = null; }
+    if (shakaInstance) { await shakaInstance.destroy(); shakaInstance = null; }
 
     if (type === 'embed') {
         embedPlayer.style.display = 'block';
         embedPlayer.src = url;
     } else {
         video.style.display = 'block';
-        if (type === 'dash' || url.includes('.mpd')) {
+        if (type === 'dash') {
             shakaInstance = new shaka.Player(video);
-            shakaInstance.addEventListener('error', () => showStreamError());
+            shakaInstance.addEventListener('error', () => streamError.classList.add('visible'));
             await shakaInstance.load(url);
             video.play();
         } else {
@@ -65,6 +62,7 @@ async function playStream(url, name, type) {
                 hls.loadSource(url);
                 hls.attachMedia(video);
                 hls.on(Hls.Events.MANIFEST_PARSED, () => video.play());
+                hls.on(Hls.Events.ERROR, () => streamError.classList.add('visible'));
             } else if (video.canPlayType('application/vnd.apple.mpegurl')) {
                 video.src = url;
                 video.play();
@@ -84,19 +82,10 @@ async function stopStream() {
     
     if (screen.orientation && screen.orientation.unlock) screen.orientation.unlock();
 
-    if (hls) hls.destroy();
-    if (shakaInstance) await shakaInstance.destroy();
+    if (hls) { hls.destroy(); hls = null; }
+    if (shakaInstance) { await shakaInstance.destroy(); shakaInstance = null; }
 }
 
-function showStreamError() {
-    streamError.classList.add('visible');
-}
-
-function retryStream() {
-    playStream(lastStream.url, lastStream.name, lastStream.type);
-}
-
-// --- FUNCIONES DE RENDERIZADO (Simplificadas) ---
 function renderChannels(channels) {
     list.innerHTML = '';
     channels.forEach(ch => {
@@ -112,4 +101,18 @@ function renderChannels(channels) {
         list.appendChild(card);
     });
 }
-// (Agrega aquí tus funciones de renderCategories, toggleView y búsqueda del script original)
+
+function renderCategories(cats) {
+    const catContainer = document.getElementById('categoriesContainer');
+    catContainer.innerHTML = '';
+    cats.forEach(cat => {
+        const btn = document.createElement('button');
+        btn.className = 'cat-btn';
+        btn.textContent = cat;
+        btn.onclick = () => {
+            const filtered = cat === 'Todos' ? allChannels : allChannels.filter(c => c.category === cat);
+            renderChannels(filtered);
+        };
+        catContainer.appendChild(btn);
+    });
+}
