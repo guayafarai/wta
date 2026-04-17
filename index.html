@@ -24,8 +24,11 @@
     </div>
     
     <video id="video" controls playsinline></video>
-    <iframe id="iframePlayer" allowfullscreen allow="autoplay; encrypted-media"></iframe>
-
+    <iframe id="iframePlayer" 
+    allowfullscreen 
+    allow="autoplay; encrypted-media" 
+    sandbox="allow-forms allow-scripts allow-same-origin allow-presentation">
+</iframe>
     <div id="streamError">
         <div class="error-icon">📡</div>
         <p>No se pudo conectar al canal</p>
