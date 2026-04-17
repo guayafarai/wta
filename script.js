@@ -1,222 +1,115 @@
-/* ── Estado global ── */
-const list        = document.getElementById('channel-list');
-const video       = document.getElementById('video');
-const container   = document.getElementById('videoContainer');
+const list = document.getElementById('channel-list');
+const video = document.getElementById('video');
+const embedPlayer = document.getElementById('embedPlayer');
+const container = document.getElementById('videoContainer');
 const searchInput = document.getElementById('channelSearch');
-const clearBtn    = document.getElementById('clearSearch');
-const emptyState  = document.getElementById('emptyState');
-const catContainer = document.getElementById('categoriesContainer');
-const streamError = document.getElementById('streamError');
 const playerTitle = document.getElementById('playerTitle');
-const footerText  = document.getElementById('footerText');
+const streamError = document.getElementById('streamError');
 
 let hls;
-let allChannels   = [];
-let activeCategory = 'Todos';
-let currentView   = localStorage.getItem('playcast_view') || 'list';
-let favorites     = JSON.parse(localStorage.getItem('playcast_favs') || '[]');
-let lastStreamUrl = '';
+let shakaInstance;
+let allChannels = [];
+let lastStream = { url: '', name: '', type: '' };
 
-/* ── Inicializar vista ── */
-applyView(currentView);
+// Configuración inicial de Shaka
+shaka.polyfill.installAll();
 
-/* ── Cargar configuración ── */
 fetch('config.json')
     .then(r => r.json())
     .then(data => {
         allChannels = data.channels || [];
-        footerText.textContent = data.footer_text || '';
-        renderCategories(data.categories || ['Todos']);
+        document.getElementById('footerText').textContent = data.footer_text;
+        renderCategories(data.categories);
         renderChannels(allChannels);
-    })
-    .catch(() => {
-        list.innerHTML = '<div style="text-align:center;padding:40px;color:#6b7280;">Error al cargar canales. Verifica config.json</div>';
     });
 
-/* ── Renderizar categorías ── */
-function renderCategories(cats) {
-    catContainer.innerHTML = '';
-    // Añadir "Favoritos" si el usuario tiene alguno
-    const allCats = favorites.length > 0 ? ['Todos', '⭐ Favoritos', ...cats.filter(c => c !== 'Todos')] : cats;
-
-    allCats.forEach(cat => {
-        const btn = document.createElement('button');
-        btn.className = 'cat-btn' + (cat === activeCategory ? ' active' : '');
-        btn.textContent = cat;
-        btn.addEventListener('click', () => {
-            activeCategory = cat;
-            document.querySelectorAll('.cat-btn').forEach(b => b.classList.remove('active'));
-            btn.classList.add('active');
-            filterAndRender();
-        });
-        catContainer.appendChild(btn);
-    });
-}
-
-/* ── Renderizar canales ── */
-function renderChannels(channels) {
-    list.innerHTML = '';
-    emptyState.style.display = channels.length === 0 ? 'block' : 'none';
-
-    channels.forEach((ch, i) => {
-        const isFav = favorites.includes(ch.url);
-        const card  = document.createElement('div');
-        card.className = 'channel-card' + (ch.is_vip ? ' is-vip' : '');
-
-        const emoji = getCategoryEmoji(ch.category);
-        const logoHTML = ch.logo
-            ? `<img src="${ch.logo}" alt="${ch.name}" onerror="this.parentElement.textContent='${emoji}'">`
-            : emoji;
-
-        card.innerHTML = `
-            <div class="channel-logo">${logoHTML}</div>
-            <div class="channel-info">
-                <span class="channel-name">${ch.name}</span>
-                <div class="channel-meta">
-                    <span class="channel-category">${ch.category || ''}</span>
-                    <span class="channel-country">${ch.country ? '· ' + ch.country : ''}</span>
-                </div>
-            </div>
-            <div class="card-actions">
-                <button class="btn-fav ${isFav ? 'active' : ''}" 
-                    data-url="${ch.url}" 
-                    title="${isFav ? 'Quitar de favoritos' : 'Añadir a favoritos'}"
-                    onclick="toggleFav(this, '${escapeAttr(ch.url)}')">★</button>
-                <button class="btn-play ${ch.is_vip ? 'vip' : ''}" 
-                    onclick="${ch.is_vip ? `window.open('${escapeAttr(ch.url)}', '_blank')` : `playStream('${escapeAttr(ch.url)}', '${escapeAttr(ch.name)}')`}">
-                    <svg width="10" height="10" viewBox="0 0 24 24" fill="currentColor"><polygon points="5,3 19,12 5,21"/></svg>
-                    ${ch.is_vip ? 'PREMIUM' : 'VER'}
-                </button>
-            </div>
-        `;
-        list.appendChild(card);
-    });
-}
-
-/* ── Filtrar y renderizar ── */
-function filterAndRender() {
-    const term = searchInput.value.toLowerCase().trim();
-
-    let filtered = allChannels.filter(ch => {
-        const matchSearch = !term || ch.name.toLowerCase().includes(term) || (ch.category || '').toLowerCase().includes(term);
-        const matchCat = activeCategory === 'Todos'
-            ? true
-            : activeCategory === '⭐ Favoritos'
-                ? favorites.includes(ch.url)
-                : ch.category === activeCategory;
-        return matchSearch && matchCat;
-    });
-
-    renderChannels(filtered);
-}
-
-/* ── Búsqueda ── */
-searchInput.addEventListener('input', e => {
-    clearBtn.classList.toggle('visible', e.target.value.length > 0);
-    filterAndRender();
-});
-
-function clearSearch() {
-    searchInput.value = '';
-    clearBtn.classList.remove('visible');
-    filterAndRender();
-}
-
-/* ── Favoritos ── */
-function toggleFav(btn, url) {
-    const idx = favorites.indexOf(url);
-    if (idx === -1) {
-        favorites.push(url);
-        btn.classList.add('active');
-        btn.title = 'Quitar de favoritos';
-    } else {
-        favorites.splice(idx, 1);
-        btn.classList.remove('active');
-        btn.title = 'Añadir a favoritos';
-    }
-    localStorage.setItem('playcast_favs', JSON.stringify(favorites));
-    // Re-renderizar categorías por si apareció/desapareció "Favoritos"
-    fetch('config.json').then(r => r.json()).then(data => {
-        renderCategories(data.categories || ['Todos']);
-    });
-}
-
-/* ── Reproductor ── */
-function playStream(url, name) {
-    if (!url) return;
-    lastStreamUrl = url;
-    playerTitle.textContent = name || 'En vivo';
+async function playStream(url, name, type) {
+    lastStream = { url, name, type };
+    playerTitle.textContent = name;
     container.style.display = 'flex';
     streamError.classList.remove('visible');
 
-    if (Hls.isSupported()) {
-        if (hls) hls.destroy();
-        hls = new Hls({ enableWorker: true });
-        hls.loadSource(url);
-        hls.attachMedia(video);
-        hls.on(Hls.Events.MANIFEST_PARSED, () => {
-            video.play().catch(() => {});
-        });
-        hls.on(Hls.Events.ERROR, (_, data) => {
-            if (data.fatal) showStreamError();
-        });
-    } else if (video.canPlayType('application/vnd.apple.mpegurl')) {
-        video.src = url;
-        video.play().catch(() => showStreamError());
+    // --- PANTALLA COMPLETA Y ROTACIÓN ---
+    try {
+        if (container.requestFullscreen) {
+            await container.requestFullscreen();
+        } else if (container.webkitRequestFullscreen) {
+            await container.webkitRequestFullscreen();
+        }
+        
+        if (screen.orientation && screen.orientation.lock) {
+            await screen.orientation.lock('landscape').catch(() => {});
+        }
+    } catch (e) { console.warn("Fullscreen no disponible"); }
+
+    // Limpiar reproductores previos
+    video.style.display = 'none';
+    embedPlayer.style.display = 'none';
+    embedPlayer.src = '';
+    if (hls) hls.destroy();
+    if (shakaInstance) await shakaInstance.destroy();
+
+    if (type === 'embed') {
+        embedPlayer.style.display = 'block';
+        embedPlayer.src = url;
     } else {
-        showStreamError();
+        video.style.display = 'block';
+        if (type === 'dash' || url.includes('.mpd')) {
+            shakaInstance = new shaka.Player(video);
+            shakaInstance.addEventListener('error', () => showStreamError());
+            await shakaInstance.load(url);
+            video.play();
+        } else {
+            if (Hls.isSupported()) {
+                hls = new Hls();
+                hls.loadSource(url);
+                hls.attachMedia(video);
+                hls.on(Hls.Events.MANIFEST_PARSED, () => video.play());
+            } else if (video.canPlayType('application/vnd.apple.mpegurl')) {
+                video.src = url;
+                video.play();
+            }
+        }
     }
 }
 
+async function stopStream() {
+    container.style.display = 'none';
+    video.pause();
+    video.src = '';
+    embedPlayer.src = '';
+
+    if (document.exitFullscreen) document.exitFullscreen().catch(() => {});
+    else if (document.webkitExitFullscreen) document.webkitExitFullscreen().catch(() => {});
+    
+    if (screen.orientation && screen.orientation.unlock) screen.orientation.unlock();
+
+    if (hls) hls.destroy();
+    if (shakaInstance) await shakaInstance.destroy();
+}
+
 function showStreamError() {
-    video.style.display = 'none';
     streamError.classList.add('visible');
 }
 
 function retryStream() {
-    video.style.display = '';
-    streamError.classList.remove('visible');
-    playStream(lastStreamUrl, playerTitle.textContent);
+    playStream(lastStream.url, lastStream.name, lastStream.type);
 }
 
-function stopStream() {
-    container.style.display = 'none';
-    video.style.display = '';
-    streamError.classList.remove('visible');
-    video.pause();
-    video.src = '';
-    if (hls) { hls.destroy(); hls = null; }
+// --- FUNCIONES DE RENDERIZADO (Simplificadas) ---
+function renderChannels(channels) {
+    list.innerHTML = '';
+    channels.forEach(ch => {
+        const card = document.createElement('div');
+        card.className = `channel-card ${ch.is_vip ? 'is-vip' : ''}`;
+        card.innerHTML = `
+            <div class="channel-info">
+                <span class="channel-name">${ch.name}</span>
+                <span class="channel-category">${ch.category}</span>
+            </div>
+            <button class="btn-play" onclick="playStream('${ch.url}', '${ch.name}', '${ch.type}')">VER</button>
+        `;
+        list.appendChild(card);
+    });
 }
-
-/* ── Toggle vista grid/list ── */
-function toggleView() {
-    currentView = currentView === 'list' ? 'grid' : 'list';
-    localStorage.setItem('playcast_view', currentView);
-    applyView(currentView);
-}
-
-function applyView(view) {
-    const btn = document.getElementById('viewToggleBtn');
-    if (!list) return;
-    list.className = view === 'grid' ? 'grid-view' : 'list-view';
-    if (btn) btn.textContent = view === 'grid' ? '☰' : '⊞';
-}
-
-/* ── Utilidades ── */
-function getCategoryEmoji(cat) {
-    const map = {
-        'Noticias': '📰',
-        'Entretenimiento': '🎬',
-        'Deportes': '⚽',
-        'Música': '🎵',
-        'Internacional': '🌐',
-        'Infantil': '🎠',
-        'Documentales': '🔬',
-    };
-    return map[cat] || '📺';
-}
-
-function escapeAttr(str) {
-    if (!str) return '';
-    return str.replace(/'/g, "\\'").replace(/"/g, '&quot;');
-}
+// (Agrega aquí tus funciones de renderCategories, toggleView y búsqueda del script original)

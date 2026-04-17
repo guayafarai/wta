@@ -4,35 +4,30 @@
   "categories": ["Todos", "Noticias", "Entretenimiento", "Deportes", "Música", "Internacional"],
   "channels": [
     {
-      "name": "Venevisión",
+      "name": "Venevisión En Vivo",
       "category": "Entretenimiento",
       "country": "VE",
       "url": "https://venevision-blocked-cdn.encoders.immergo.tv/master.m3u8",
+      "type": "hls",
       "is_vip": false,
-      "logo": "https://upload.wikimedia.org/wikipedia/commons/thumb/8/8b/Logotipo_de_Venevisi%C3%B3n_%28unoffical_blue_version%29.svg/1280px-Logotipo_de_Venevisi%C3%B3n_%28unoffical_blue_version%29.svg.png"
+      "logo": ""
     },
     {
-      "name": "TeleSUR",
-      "category": "Informativo",
-      "country": "VE",
-      "url": "https://mblesmain01.telesur.ultrabase.net/mbliveMain/hd/playlist.m3u8",
-      "is_vip": false,
-      "logo": "https://graph.facebook.com/teleSUR/picture?width=200&height=200"
-    },
-    {
-      "name": "Globovision",
-      "category": "Noticias",
-      "country": "VE",
-      "url": "https://59d39900ebfb8.streamlock.net/globo-720p/globo-720p/playlist.m3u8",
-      "is_vip": false,
-      "logo": "https://graph.facebook.com/globovision/picture?width=200&height=200"
-    },
-    {
-      "name": "[VIP] Servidor Premium HD",
+      "name": "Canal DASH (Prueba)",
       "category": "Internacional",
-      "country": "★",
-      "url": "https://www.profitablecpmratenetwork.com/i6iqy6u5?key=ec86e0751238aa89162637aca7ab9656",
-      "is_vip": true,
+      "country": "INT",
+      "url": "https://livesim.dashif.org/livesim/testpic_2s/Manifest.mpd",
+      "type": "dash",
+      "is_vip": false,
+      "logo": ""
+    },
+    {
+      "name": "YouTube Live Embed",
+      "category": "Música",
+      "country": "US",
+      "url": "https://www.youtube.com/embed/live_stream?channel=UC8scPZ_q89-AUnAb_vS8Tgw",
+      "type": "embed",
+      "is_vip": false,
       "logo": ""
     }
   ]
