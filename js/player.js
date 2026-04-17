@@ -118,17 +118,19 @@ const PlayerModule = (() => {
     clearOverlayTimer();
   }
 
-  // ── CORS Proxy list (intentados en orden si el primero falla) ──
-  // Puedes añadir tu propio proxy aquí. Formato: fn(url) => url_proxificada
+  // ── CORS Proxy list ──────────────────────────────
+  // Probados en orden. Si todos fallan → intento iframe (último recurso).
+  // Para agregar tu propio proxy: url => `https://tu-proxy.com/?url=${encodeURIComponent(url)}`
   const CORS_PROXIES = [
-    null, // intento directo primero
+    null,  // 0: directo (sin proxy)
     url => `https://corsproxy.io/?${encodeURIComponent(url)}`,
-    url => `https://api.allorigins.win/raw?url=${encodeURIComponent(url)}`,
+    url => `https://proxy.cors.sh/${url}`,
+    url => `https://thingproxy.freeboard.io/fetch/${url}`,
   ];
   let proxyIndex = 0;
 
   function _applyProxy(url) {
-    if (proxyIndex === 0) return url; // directo
+    if (proxyIndex === 0) return url;
     const fn = CORS_PROXIES[proxyIndex];
     return fn ? fn(url) : url;
   }
@@ -137,7 +139,6 @@ const PlayerModule = (() => {
   function _playHLS(url, retryAsProxy = false) {
     videoEl.style.display = 'block';
 
-    // Si venimos de un retry, incrementar índice de proxy
     if (retryAsProxy) {
       proxyIndex = Math.min(proxyIndex + 1, CORS_PROXIES.length - 1);
     } else {
@@ -145,6 +146,9 @@ const PlayerModule = (() => {
     }
 
     const srcUrl = _applyProxy(url);
+    if (proxyIndex > 0) {
+      console.warn(`[Player] Intentando proxy ${proxyIndex}: ${srcUrl}`);
+    }
 
     if (typeof Hls !== 'undefined' && Hls.isSupported()) {
       if (hlsInstance) { hlsInstance.destroy(); hlsInstance = null; }
@@ -153,10 +157,7 @@ const PlayerModule = (() => {
         enableWorker: true,
         lowLatencyMode: true,
         backBufferLength: 30,
-        xhrSetup(xhr) {
-          // Añadir header origin si el proxy lo necesita
-          xhr.withCredentials = false;
-        }
+        xhrSetup(xhr) { xhr.withCredentials = false; }
       });
       hlsInstance.loadSource(srcUrl);
       hlsInstance.attachMedia(videoEl);
@@ -166,12 +167,14 @@ const PlayerModule = (() => {
       });
       hlsInstance.on(Hls.Events.ERROR, (_, data) => {
         if (!data.fatal) return;
-        // Intentar con proxy si hay más opciones disponibles
+
         if (proxyIndex < CORS_PROXIES.length - 1) {
-          console.warn(`[Player] HLS directo falló, intentando proxy ${proxyIndex + 1}...`);
+          // Quedan proxies por intentar
           _playHLS(url, true);
         } else {
-          showError('Sin señal — el canal puede estar fuera de aire o bloqueado por CORS');
+          // Todos los proxies HLS fallaron — intentar iframe como último recurso
+          console.warn('[Player] Todos los proxies HLS fallaron, intentando iframe embed...');
+          _tryIframeEmbed(url);
         }
       });
     } else if (videoEl.canPlayType('application/vnd.apple.mpegurl')) {
@@ -181,10 +184,44 @@ const PlayerModule = (() => {
         showLoading(false);
         videoEl.play().catch(() => {});
       }, { once: true });
-      videoEl.addEventListener('error', () => showError('Error al cargar el stream'), { once: true });
+      videoEl.addEventListener('error', () => {
+        if (proxyIndex < CORS_PROXIES.length - 1) {
+          _playHLS(url, true);
+        } else {
+          _tryIframeEmbed(url);
+        }
+      }, { once: true });
     } else {
       showError('HLS no soportado en este dispositivo');
     }
+  }
+
+  // ── Iframe fallback: intenta cargar el m3u8 en un iframe embed ──
+  // Útil cuando el propio sitio de origen tiene un player embebible.
+  // Si la URL tiene un dominio conocido con player web, redirige allí.
+  function _tryIframeEmbed(url) {
+    try {
+      const domain = new URL(url).hostname;
+
+      // Mapa de CDNs conocidos → su player embed público
+      const knownEmbeds = {
+        'venevision': 'https://www.venevision.com/en-vivo',
+        'rcntelevision': 'https://www.rcntelevision.com/envivo',
+        'canalrcn': 'https://www.canalrcn.com/envivo',
+        'caracoltv': 'https://caracoltv.com/envivo',
+        'rpp': 'https://rpp.pe/envivo',
+      };
+
+      const matchKey = Object.keys(knownEmbeds).find(k => domain.includes(k));
+      if (matchKey) {
+        console.warn(`[Player] Redirigiendo a embed conocido: ${knownEmbeds[matchKey]}`);
+        _playIframe(knownEmbeds[matchKey]);
+        return;
+      }
+    } catch (e) {}
+
+    // No hay embed conocido — mostrar error con instrucciones claras
+    showError('CORS bloqueado — usa un embed o URL pública');
   }
 
   function _playDash(url) {
@@ -204,8 +241,29 @@ const PlayerModule = (() => {
   function _playIframe(url) {
     iframeEl.style.display = 'block';
     iframeEl.src = url;
-    // Iframes don't fire reliable load events; just hide spinner after timeout
-    setTimeout(() => showLoading(false), 2000);
+
+    // Ocultar spinner después de 3s (iframes no disparan eventos fiables)
+    const t = setTimeout(() => showLoading(false), 3000);
+
+    // Si el iframe dispara error (raro pero posible en algunos browsers)
+    iframeEl.onerror = () => {
+      clearTimeout(t);
+      showError('El sitio no permite ser embebido');
+    };
+
+    // Detectar si quedó en blanco (X-Frame-Options) después de carga
+    iframeEl.onload = () => {
+      clearTimeout(t);
+      showLoading(false);
+      try {
+        // Si podemos leer contentDocument estamos en same-origin — OK
+        // Si lanza SecurityError → cross-origin pero cargó (probablemente bien)
+        void iframeEl.contentDocument;
+      } catch (e) {
+        // Cross-origin → normal, probablemente cargó correctamente
+        showLoading(false);
+      }
+    };
   }
 
   function _playDirect(url) {
