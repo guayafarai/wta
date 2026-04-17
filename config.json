@@ -11,7 +11,7 @@
       "name": "Venevisión En Vivo",
       "category": "Entretenimiento",
       "country": "VE",
-      "url": "https://www.venevision.com/en-vivo",
+      "url": "https://venevision-blocked-cdn.encoders.immergo.tv/master.m3u8",
       "is_vip": false,
       "logo": ""
     },
