@@ -1,17 +1,21 @@
 {
   "app_name": "PlayCast PRO",
   "footer_text": "PlayCast • Televisión en vivo • 2026",
+
   "categories": ["Todos", "Noticias", "Entretenimiento", "Deportes", "Música", "Internacional"],
+
   "channels": [
+
     {
       "id": "venevision",
       "name": "Venevisión En Vivo",
       "category": "Entretenimiento",
       "country": "VE",
-      "url": "https://venevision-blocked-cdn.encoders.immergo.tv/master.m3u8",
+      "url": "https://www.venevision.com/en-vivo",
       "is_vip": false,
       "logo": ""
     },
+
     {
       "id": "cnn-es",
       "name": "CNN en Español",
@@ -21,6 +25,7 @@
       "is_vip": false,
       "logo": ""
     },
+
     {
       "id": "espn-lat",
       "name": "ESPN Latinoamérica",
@@ -30,6 +35,7 @@
       "is_vip": false,
       "logo": ""
     },
+
     {
       "id": "mtv-lat",
       "name": "MTV Latino",
@@ -39,6 +45,7 @@
       "is_vip": false,
       "logo": ""
     },
+
     {
       "id": "vip-premium",
       "name": "Servidor Premium HD",
@@ -48,5 +55,6 @@
       "is_vip": true,
       "logo": ""
     }
+
   ]
 }
