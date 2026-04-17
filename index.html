@@ -21,8 +21,11 @@
             <span id="playerTitle">—</span>
             <div id="liveIndicator"><span class="pulse-dot"></span> EN VIVO</div>
         </div>
-        <video id="video" playsinline></video>
+        
+        <video id="video" controls playsinline></video>
+        
         <iframe id="embedPlayer" allow="autoplay; fullscreen" style="display:none; width:100%; height:100%; border:none;"></iframe>
+
         <div id="streamError">
             <div class="error-icon">📡</div>
             <p>No se pudo conectar al canal</p>
@@ -38,7 +41,7 @@
                 <span class="brand-badge">PRO</span>
             </div>
             <div class="header-actions">
-                <button class="icon-btn" id="viewToggleBtn" onclick="toggleView()">⊞</button>
+                <button class="icon-btn" id="viewToggleBtn" onclick="toggleView()" title="Cambiar vista">⊞</button>
             </div>
         </div>
     </header>
