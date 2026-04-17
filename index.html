@@ -115,11 +115,13 @@
            aria-label="Reproductor de video">
     </video>
 
-    <!-- Iframe (YouTube / embeds) -->
+    <!-- Iframe (YouTube / embeds)
+         allow-same-origin + allow-scripts juntos generan advertencia de seguridad,
+         por eso NO usamos sandbox aquí. La restricción viene del referrerpolicy. -->
     <iframe id="iframe-player"
             allowfullscreen
-            allow="autoplay; encrypted-media; fullscreen"
-            sandbox="allow-forms allow-scripts allow-same-origin allow-presentation allow-popups"
+            allow="autoplay; encrypted-media; fullscreen; picture-in-picture"
+            referrerpolicy="no-referrer"
             title="Canal embebido">
     </iframe>
 
