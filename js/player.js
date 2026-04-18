@@ -1,246 +1,157 @@
-/* ═══════════════════════════════════════════════════
-   PlayCast PRO — Player Module
-   Soporta: HLS (.m3u8), DASH (.mpd), iframe, MP4
-   HTTP y HTTPS sin proxies
-   ═══════════════════════════════════════════════════ */
+const Player = (() => {
+    let lastUrl = '';
+    let lastName = '';
+    let lastId = '';
+    let hls = null;
+    let dash = null;
 
-const PlayerModule = (() => {
-  let videoEl, iframeEl, overlayEl, errorEl, loadingEl;
-  let channelNameEl, sidebarNameEl, backBtn, fullscreenBtn;
+    /**
+     * Limpia el contenedor del reproductor y destruye instancias previas
+     * para evitar fugas de memoria o superposición de audio.
+     */
+    const _reset = () => {
+        if (hls) {
+            hls.destroy();
+            hls = null;
+        }
+        if (dash) {
+            dash.reset();
+            dash = null;
+        }
+        
+        const container = document.getElementById('player-container');
+        if (container) {
+            // Reestablecemos el HTML base con una etiqueta de video limpia
+            container.innerHTML = '<video id="main-video" controls playsinline></video>';
+        }
+    };
 
-  let hlsInstance  = null;
-  let dashInstance = null;
-  let lastUrl      = '';
-  let lastName     = '';
-  let lastId       = '';
-  let overlayTimer = null;
-  let mounted      = false;
+    /**
+     * Función principal para reproducir un canal.
+     * @param {string} url - URL del stream o iframe.
+     * @param {string} name - Nombre del canal para mostrar en la UI.
+     * @param {string} id - ID único del canal.
+     */
+    const play = (url, name, id) => {
+        if (!url) return;
+        
+        lastUrl = url;
+        lastName = name || lastName;
+        lastId = id || lastId;
 
-  // ── Mount ─────────────────────────────────────────
-  function mount() {
-    if (mounted) return;
-    mounted = true;
+        // Actualizar nombres en la interfaz
+        const channelNameEl = document.getElementById('current-channel-name');
+        const sidebarNameEl = document.getElementById('sidebar-channel-name');
+        if (channelNameEl) channelNameEl.textContent = lastName;
+        if (sidebarNameEl) sidebarNameEl.textContent = lastName;
 
-    videoEl       = document.getElementById('video-player');
-    iframeEl      = document.getElementById('iframe-player');
-    overlayEl     = document.getElementById('player-overlay');
-    errorEl       = document.getElementById('stream-error');
-    loadingEl     = document.getElementById('stream-loading');
-    channelNameEl = document.getElementById('player-channel-name');
-    sidebarNameEl = document.getElementById('sidebar-channel-name');
-    backBtn       = document.getElementById('btn-back-player');
-    fullscreenBtn = document.getElementById('btn-fullscreen');
+        // --- SOLUCIÓN PARA ERROR DE CORS ---
+        // Si es un archivo .m3u8 o .mpd, usamos el proxy AllOrigins para saltar el bloqueo
+        const isStreamFile = url.toLowerCase().includes('.m3u8') || url.toLowerCase().includes('.mpd');
+        let finalUrl = url;
 
-    backBtn?.addEventListener('click', () => { stop(); Router.navigate('/'); });
-    fullscreenBtn?.addEventListener('click', toggleFullscreen);
-    document.getElementById('btn-retry-stream')?.addEventListener('click', () => play(lastUrl, lastName, lastId));
-    document.getElementById('video-wrapper')?.addEventListener('click', toggleOverlay);
-    document.addEventListener('keydown', e => {
-      if (e.key === 'Escape') { stop(); Router.navigate('/'); }
-    });
-  }
+        if (isStreamFile && !url.includes('api.allorigins.win')) {
+            finalUrl = `https://api.allorigins.win/raw?url=${encodeURIComponent(url)}`;
+        }
+        // ------------------------------------
 
-  // ── Play ──────────────────────────────────────────
-  function play(url, name, id) {
-    if (!url) { _showError('URL no disponible', 'Agrega la URL del canal en su archivo .json'); return; }
+        _reset();
 
-    lastUrl  = url;
-    lastName = name || 'En vivo';
-    lastId   = id   || '';
+        // Determinar el método de reproducción según la extensión o dominio
+        if (finalUrl.includes('.m3u8')) {
+            _playHLS(finalUrl);
+        } else if (finalUrl.includes('.mpd')) {
+            _playDASH(finalUrl);
+        } else if (finalUrl.includes('youtube.com') || finalUrl.includes('youtu.be')) {
+            _playYoutube(finalUrl);
+        } else {
+            // Si no es un archivo directo, se carga como Iframe (ej. Twitch, reproductores externos)
+            _playIframe(finalUrl);
+        }
+    };
 
-    if (channelNameEl) channelNameEl.textContent = lastName;
-    if (sidebarNameEl) sidebarNameEl.textContent = lastName;
+    /**
+     * Reproducción de HLS (.m3u8) usando hls.js
+     */
+    const _playHLS = (url) => {
+        const video = document.getElementById('main-video');
+        
+        if (Hls.isSupported()) {
+            hls = new Hls({
+                xhrSetup: xhr => {
+                    // Evita problemas de autenticación cruzada con el proxy
+                    xhr.withCredentials = false;
+                }
+            });
+            hls.loadSource(url);
+            hls.attachMedia(video);
+            hls.on(Hls.Events.MANIFEST_PARSED, () => {
+                video.play().catch(e => console.log("Autoplay bloqueado:", e));
+            });
+            
+            // Manejo básico de errores de red
+            hls.on(Hls.Events.ERROR, (event, data) => {
+                if (data.fatal) {
+                    console.error("Error fatal en HLS:", data.type);
+                }
+            });
+        } 
+        // Soporte nativo para Safari/iOS
+        else if (video.canPlayType('application/vnd.apple.mpegurl')) {
+            video.src = url;
+            video.addEventListener('loadedmetadata', () => {
+                video.play().catch(e => console.log("Autoplay bloqueado:", e));
+            });
+        }
+    };
 
-    _reset();
-    _showLoading(true);
-    _showError(false);
+    /**
+     * Reproducción de DASH (.mpd) usando dash.js
+     */
+    const _playDASH = (url) => {
+        const video = document.getElementById('main-video');
+        dash = dashjs.MediaPlayer().create();
+        dash.initialize(video, url, true);
+    };
 
-    // Mixed Content fix: si la página es HTTPS y el stream es HTTP,
-    // intentar https:// primero — la mayoría de servidores lo aceptan
-    if (location.protocol === 'https:' && url.startsWith('http://')) {
-      url = url.replace('http://', 'https://');
-      lastUrl = url; // actualizar para que el retry también use https
-    }
+    /**
+     * Formatea links de YouTube para que funcionen en el reproductor
+     */
+    const _playYoutube = (url) => {
+        let videoId = '';
+        if (url.includes('v=')) {
+            videoId = url.split('v=')[1].split('&')[0];
+        } else {
+            videoId = url.split('/').pop();
+        }
+        _playIframe(`https://www.youtube.com/embed/${videoId}?autoplay=1`);
+    };
 
-    // Detectar tipo por extensión o dominio conocido
-    const isIframe = /youtube\.com|youtu\.be|facebook\.com|twitch\.tv|dailymotion\.com|\/embed\//i.test(url)
-                  || /\.html?($|\?)/i.test(url);
-    const isDash   = /\.mpd($|\?)/i.test(url);
-    const isHLS    = /\.m3u8($|\?)/i.test(url);
+    /**
+     * Carga de contenido externo mediante iframes
+     */
+    const _playIframe = (url) => {
+        const container = document.getElementById('player-container');
+        if (container) {
+            container.innerHTML = `
+                <iframe 
+                    src="${url}" 
+                    frameborder="0" 
+                    allowfullscreen 
+                    allow="autoplay; encrypted-media"
+                    style="width:100%; height:100%; background:#000;">
+                </iframe>`;
+        }
+    };
 
-    if (/^rtmp/i.test(url)) {
-      _showError('RTMP no soportado', 'Usa una URL .m3u8, .mpd o embed de YouTube/Twitch');
-      return;
-    }
+    /**
+     * Recarga el canal actual (útil para errores de conexión)
+     */
+    const refresh = () => {
+        if (lastUrl) play(lastUrl, lastName, lastId);
+    };
 
-    if      (isIframe) _playIframe(url);
-    else if (isDash)   _playDash(url);
-    else if (isHLS)    _playHLS(url);
-    else               _playDirect(url);
-
-    showOverlay();
-  }
-
-  // ── Stop ──────────────────────────────────────────
-  function stop() {
-    _reset();
-    _exitFullscreen();
-    _unlockOrientation();
-  }
-
-  // ── Reset ─────────────────────────────────────────
-  function _reset() {
-    hlsInstance?.destroy();  hlsInstance  = null;
-    dashInstance?.reset();   dashInstance = null;
-
-    if (videoEl) {
-      videoEl.pause();
-      videoEl.removeAttribute('src');
-      videoEl.load();
-      videoEl.style.display = 'none';
-    }
-    if (iframeEl) {
-      iframeEl.src           = '';
-      iframeEl.style.display = 'none';
-    }
-    clearOverlayTimer();
-  }
-
-  // ── HLS (.m3u8) — http y https ────────────────────
-  function _playHLS(url) {
-    videoEl.style.display = 'block';
-
-    if (typeof Hls !== 'undefined' && Hls.isSupported()) {
-      hlsInstance = new Hls({
-        enableWorker:    true,
-        lowLatencyMode:  true,
-        backBufferLength: 30,
-        // Permite URLs http:// aunque la página sea https://
-        // (el navegador bloquea mixed content; para http puro
-        //  sirve desde un WebView Android donde no aplica esa restricción)
-        xhrSetup: xhr => { xhr.withCredentials = false; }
-      });
-      hlsInstance.loadSource(url);
-      hlsInstance.attachMedia(videoEl);
-      hlsInstance.on(Hls.Events.MANIFEST_PARSED, () => {
-        _showLoading(false);
-        videoEl.play().catch(() => {});
-      });
-      hlsInstance.on(Hls.Events.ERROR, (_, data) => {
-        if (!data.fatal) return;
-        _showError('Sin señal', 'No se pudo cargar el stream. Verifica la URL en el .json');
-      });
-    } else if (videoEl.canPlayType('application/vnd.apple.mpegurl')) {
-      // HLS nativo (Safari / iOS)
-      videoEl.src = url;
-      videoEl.addEventListener('loadedmetadata', () => {
-        _showLoading(false);
-        videoEl.play().catch(() => {});
-      }, { once: true });
-      videoEl.addEventListener('error', () =>
-        _showError('Sin señal', 'Error cargando el stream HLS')
-      , { once: true });
-    } else {
-      _showError('HLS no soportado', 'Tu navegador no puede reproducir streams .m3u8');
-    }
-  }
-
-  // ── DASH (.mpd) ───────────────────────────────────
-  function _playDash(url) {
-    videoEl.style.display = 'block';
-    if (typeof dashjs === 'undefined') {
-      _showError('Player no disponible', 'dash.js no cargó correctamente');
-      return;
-    }
-    dashInstance = dashjs.MediaPlayer().create();
-    dashInstance.initialize(videoEl, url, true);
-    dashInstance.on(dashjs.MediaPlayer.events.STREAM_INITIALIZED, () => _showLoading(false));
-    dashInstance.on(dashjs.MediaPlayer.events.ERROR, () =>
-      _showError('Sin señal', 'Error cargando el stream DASH'));
-  }
-
-  // ── Iframe (YouTube, Twitch, embeds) ─────────────
-  // El sandbox en el HTML bloquea popups sin necesitar JS extra
-  function _playIframe(url) {
-    iframeEl.style.display = 'block';
-    iframeEl.src = url;
-
-    const t = setTimeout(() => _showLoading(false), 3500);
-    iframeEl.onload  = () => { clearTimeout(t); _showLoading(false); };
-    iframeEl.onerror = () => { clearTimeout(t); _showError('Sin señal', 'El embed no pudo cargarse'); };
-  }
-
-  // ── Directo (MP4, etc.) ───────────────────────────
-  function _playDirect(url) {
-    videoEl.style.display = 'block';
-    videoEl.src = url;
-    videoEl.play()
-      .then(() => _showLoading(false))
-      .catch(() => _showError('Sin señal', 'No se pudo reproducir el canal'));
-  }
-
-  // ── Error / Loading ───────────────────────────────
-  function _showError(title, msg) {
-    _showLoading(false);
-    if (!errorEl) return;
-    if (title === false) { errorEl.classList.remove('visible'); return; }
-    const tEl = document.getElementById('error-title');
-    const mEl = document.getElementById('error-msg');
-    if (tEl) tEl.textContent = title || 'Sin señal';
-    if (mEl) mEl.textContent = msg   || 'El canal no está disponible';
-    errorEl.classList.add('visible');
-  }
-
-  function _showLoading(v) { loadingEl?.classList.toggle('visible', v); }
-
-  // ── Overlay ───────────────────────────────────────
-  function showOverlay() {
-    overlayEl?.classList.add('visible');
-    clearOverlayTimer();
-    overlayTimer = setTimeout(() => overlayEl?.classList.remove('visible'), 4000);
-  }
-
-  function toggleOverlay() {
-    const vis = overlayEl?.classList.contains('visible');
-    if (vis) { overlayEl.classList.remove('visible'); clearOverlayTimer(); }
-    else showOverlay();
-  }
-
-  function clearOverlayTimer() {
-    if (overlayTimer) { clearTimeout(overlayTimer); overlayTimer = null; }
-  }
-
-  // ── Fullscreen ────────────────────────────────────
-  async function toggleFullscreen() {
-    const w = document.getElementById('video-wrapper');
-    if (!w) return;
-    try {
-      if (!document.fullscreenElement && !document.webkitFullscreenElement) {
-        await (w.requestFullscreen || w.webkitRequestFullscreen).call(w);
-        _lockLandscape();
-      } else {
-        _exitFullscreen();
-        _unlockOrientation();
-      }
-    } catch (e) {}
-  }
-
-  function _exitFullscreen() {
-    try {
-      if (document.fullscreenElement || document.webkitFullscreenElement) {
-        (document.exitFullscreen || document.webkitExitFullscreen)?.call(document);
-      }
-    } catch (e) {}
-  }
-
-  function _lockLandscape() {
-    if (/Android|iPhone|iPad/i.test(navigator.userAgent))
-      screen.orientation?.lock('landscape').catch(() => {});
-  }
-
-  function _unlockOrientation() { screen.orientation?.unlock?.(); }
-
-  return { mount, play, stop, showOverlay };
+    return { play, refresh };
 })();
 
-window.PlayerModule = PlayerModule;
+export default Player;
