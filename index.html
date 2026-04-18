@@ -92,9 +92,15 @@
 
     <video id="video-player" playsinline webkit-playsinline x5-playsinline preload="none"></video>
 
-    <!-- iframe sin sandbox: evita warning "allow-scripts + allow-same-origin" -->
-    <!-- sin allowfullscreen: ya está cubierto por allow="fullscreen"          -->
+    <!-- sandbox bloquea popups/redirecciones por defecto.
+         allow-scripts        → el player del embed puede ejecutar JS
+         allow-same-origin    → el embed puede acceder a sus propias cookies/storage
+         allow-forms          → algunos players usan forms internamente
+         allow-presentation   → necesario para fullscreen en algunos embeds
+         SIN allow-popups     → BLOQUEA toda ventana emergente / pestaña nueva
+         SIN allow-top-navigation → BLOQUEA redirecciones de la página principal -->
     <iframe id="iframe-player"
+            sandbox="allow-scripts allow-same-origin allow-forms allow-presentation"
             allow="autoplay; encrypted-media; fullscreen; picture-in-picture"
             referrerpolicy="no-referrer"
             title="Canal embebido">
