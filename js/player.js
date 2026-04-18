@@ -1,7 +1,7 @@
 /* ═══════════════════════════════════════════════════
    PlayCast PRO — Player Module
    Soporta: HLS (.m3u8), DASH (.mpd), iframe, MP4
-   CORREGIDO: Salto de CORS con Proxy Personalizado
+   HTTP y HTTPS sin proxies
    ═══════════════════════════════════════════════════ */
 
 const PlayerModule = (() => {
@@ -33,13 +33,8 @@ const PlayerModule = (() => {
 
     backBtn?.addEventListener('click', () => { stop(); Router.navigate('/'); });
     fullscreenBtn?.addEventListener('click', toggleFullscreen);
-    
-    document.getElementById('btn-retry-stream')?.addEventListener('click', () => {
-      play(lastUrl, lastName, lastId);
-    });
-
+    document.getElementById('btn-retry-stream')?.addEventListener('click', () => play(lastUrl, lastName, lastId));
     document.getElementById('video-wrapper')?.addEventListener('click', toggleOverlay);
-    
     document.addEventListener('keydown', e => {
       if (e.key === 'Escape') { stop(); Router.navigate('/'); }
     });
@@ -47,10 +42,7 @@ const PlayerModule = (() => {
 
   // ── Play ──────────────────────────────────────────
   function play(url, name, id) {
-    if (!url) {
-      _showError('URL no disponible', 'Verifica el enlace en el archivo JSON.');
-      return;
-    }
+    if (!url) { _showError('URL no disponible', 'Agrega la URL del canal en su archivo .json'); return; }
 
     lastUrl  = url;
     lastName = name || 'En vivo';
@@ -63,34 +55,44 @@ const PlayerModule = (() => {
     _showLoading(true);
     _showError(false);
 
-    // ─── LÓGICA DE PROXY (SOLUCIÓN CORS) ───
-    const isStreamFile = /\.m3u8($|\?)/i.test(url) || /\.mpd($|\?)/i.test(url);
-    let finalUrl = url;
+    // ── Mixed Content fix ──────────────────────────
+    // Solo proxear streams http:// (Mixed Content bloqueado en HTTPS).
+    // Streams https:// van directo, sin tocar.
+    const PROXY_BASE = 'https://playcast-proxy.elblogdevictorlam.workers.dev';
 
-    if (isStreamFile) {
-      // Usando tu Worker de Cloudflare personalizado
-      finalUrl = `https://playcast-proxy.elblogdevictorlam.workers.dev/?url=${encodeURIComponent(url)}`;
+    let streamUrl = url; // URL real que se pasa al player
+    if (location.protocol === 'https:' && url.startsWith('http://')) {
+      streamUrl = `${PROXY_BASE}?url=${encodeURIComponent(url)}`;
+      // lastUrl conserva la URL original (sin proxy) para reintentos limpios
     }
-    // ───────────────────────────────────────
 
-    const isIframe = /youtube\.com|youtu\.be|facebook\.com|twitch\.tv|dailymotion\.com|\/embed\//i.test(finalUrl)
-                  || /\.html?($|\?)/i.test(finalUrl);
-    const isDash   = /\.mpd($|\?)/i.test(finalUrl);
-    const isHLS    = /\.m3u8($|\?)/i.test(finalUrl);
+    // Detectar tipo — usar streamUrl para la detección
+    const isIframe = /youtube\.com|youtu\.be|facebook\.com|twitch\.tv|dailymotion\.com|\/embed\//i.test(streamUrl)
+                  || /\.html?($|\?)/i.test(streamUrl);
+    const isDash   = /\.mpd($|\?)/i.test(streamUrl);
+    const isHLS    = /\.m3u8($|\?)/i.test(url); // detectar por URL original
 
-    if (isIframe)      _playIframe(finalUrl);
-    else if (isDash)   _playDash(finalUrl);
-    else if (isHLS)    _playHLS(finalUrl);
-    else               _playDirect(finalUrl);
+    if (/^rtmp/i.test(url)) {
+      _showError('RTMP no soportado', 'Usa una URL .m3u8, .mpd o embed de YouTube/Twitch');
+      return;
+    }
+
+    if      (isIframe) _playIframe(streamUrl);
+    else if (isDash)   _playDash(streamUrl);
+    else if (isHLS)    _playHLS(streamUrl);
+    else               _playDirect(streamUrl);
 
     showOverlay();
   }
 
+  // ── Stop ──────────────────────────────────────────
   function stop() {
     _reset();
     _exitFullscreen();
+    _unlockOrientation();
   }
 
+  // ── Reset ─────────────────────────────────────────
   function _reset() {
     hlsInstance?.destroy();  hlsInstance  = null;
     dashInstance?.reset();   dashInstance = null;
@@ -108,15 +110,19 @@ const PlayerModule = (() => {
     clearOverlayTimer();
   }
 
-  // ── Handlers de Reproducción ──────────────────────
+  // ── HLS (.m3u8) — http y https ────────────────────
   function _playHLS(url) {
     videoEl.style.display = 'block';
+
     if (typeof Hls !== 'undefined' && Hls.isSupported()) {
       hlsInstance = new Hls({
-        xhrSetup: xhr => { 
-          // Importante para que el proxy no bloquee por falta de cabeceras
-          xhr.withCredentials = false; 
-        }
+        enableWorker:    true,
+        lowLatencyMode:  true,
+        backBufferLength: 30,
+        // Permite URLs http:// aunque la página sea https://
+        // (el navegador bloquea mixed content; para http puro
+        //  sirve desde un WebView Android donde no aplica esa restricción)
+        xhrSetup: xhr => { xhr.withCredentials = false; }
       });
       hlsInstance.loadSource(url);
       hlsInstance.attachMedia(videoEl);
@@ -125,49 +131,73 @@ const PlayerModule = (() => {
         videoEl.play().catch(() => {});
       });
       hlsInstance.on(Hls.Events.ERROR, (_, data) => {
-        if (data.fatal) _showError('Error de Señal', 'El enlace no es compatible o el servidor lo bloqueó.');
+        if (!data.fatal) return;
+        _showError('Sin señal', 'No se pudo cargar el stream. Verifica la URL en el .json');
       });
     } else if (videoEl.canPlayType('application/vnd.apple.mpegurl')) {
+      // HLS nativo (Safari / iOS)
       videoEl.src = url;
       videoEl.addEventListener('loadedmetadata', () => {
         _showLoading(false);
         videoEl.play().catch(() => {});
       }, { once: true });
+      videoEl.addEventListener('error', () =>
+        _showError('Sin señal', 'Error cargando el stream HLS')
+      , { once: true });
+    } else {
+      _showError('HLS no soportado', 'Tu navegador no puede reproducir streams .m3u8');
     }
   }
 
+  // ── DASH (.mpd) ───────────────────────────────────
   function _playDash(url) {
     videoEl.style.display = 'block';
+    if (typeof dashjs === 'undefined') {
+      _showError('Player no disponible', 'dash.js no cargó correctamente');
+      return;
+    }
     dashInstance = dashjs.MediaPlayer().create();
     dashInstance.initialize(videoEl, url, true);
     dashInstance.on(dashjs.MediaPlayer.events.STREAM_INITIALIZED, () => _showLoading(false));
+    dashInstance.on(dashjs.MediaPlayer.events.ERROR, () =>
+      _showError('Sin señal', 'Error cargando el stream DASH'));
   }
 
+  // ── Iframe (YouTube, Twitch, embeds) ─────────────
+  // El sandbox en el HTML bloquea popups sin necesitar JS extra
   function _playIframe(url) {
     iframeEl.style.display = 'block';
     iframeEl.src = url;
-    // Los iframes no suelen dar error de carga detectable fácilmente, quitamos loading tras 3s
-    setTimeout(() => _showLoading(false), 3000);
+
+    const t = setTimeout(() => _showLoading(false), 3500);
+    iframeEl.onload  = () => { clearTimeout(t); _showLoading(false); };
+    iframeEl.onerror = () => { clearTimeout(t); _showError('Sin señal', 'El embed no pudo cargarse'); };
   }
 
+  // ── Directo (MP4, etc.) ───────────────────────────
   function _playDirect(url) {
     videoEl.style.display = 'block';
     videoEl.src = url;
-    videoEl.play().then(() => _showLoading(false)).catch(() => {});
+    videoEl.play()
+      .then(() => _showLoading(false))
+      .catch(() => _showError('Sin señal', 'No se pudo reproducir el canal'));
   }
 
-  // ── UI Helpers ────────────────────────────────────
+  // ── Error / Loading ───────────────────────────────
   function _showError(title, msg) {
     _showLoading(false);
     if (!errorEl) return;
     if (title === false) { errorEl.classList.remove('visible'); return; }
-    document.getElementById('error-title').textContent = title;
-    document.getElementById('error-msg').textContent = msg;
+    const tEl = document.getElementById('error-title');
+    const mEl = document.getElementById('error-msg');
+    if (tEl) tEl.textContent = title || 'Sin señal';
+    if (mEl) mEl.textContent = msg   || 'El canal no está disponible';
     errorEl.classList.add('visible');
   }
 
   function _showLoading(v) { loadingEl?.classList.toggle('visible', v); }
 
+  // ── Overlay ───────────────────────────────────────
   function showOverlay() {
     overlayEl?.classList.add('visible');
     clearOverlayTimer();
@@ -175,24 +205,46 @@ const PlayerModule = (() => {
   }
 
   function toggleOverlay() {
-    overlayEl?.classList.contains('visible') ? overlayEl.classList.remove('visible') : showOverlay();
+    const vis = overlayEl?.classList.contains('visible');
+    if (vis) { overlayEl.classList.remove('visible'); clearOverlayTimer(); }
+    else showOverlay();
   }
 
-  function clearOverlayTimer() { if (overlayTimer) { clearTimeout(overlayTimer); overlayTimer = null; } }
+  function clearOverlayTimer() {
+    if (overlayTimer) { clearTimeout(overlayTimer); overlayTimer = null; }
+  }
 
+  // ── Fullscreen ────────────────────────────────────
   async function toggleFullscreen() {
     const w = document.getElementById('video-wrapper');
-    if (!document.fullscreenElement && !document.webkitFullscreenElement) {
-      await (w.requestFullscreen || w.webkitRequestFullscreen).call(w);
-    } else {
-      document.exitFullscreen();
-    }
+    if (!w) return;
+    try {
+      if (!document.fullscreenElement && !document.webkitFullscreenElement) {
+        await (w.requestFullscreen || w.webkitRequestFullscreen).call(w);
+        _lockLandscape();
+      } else {
+        _exitFullscreen();
+        _unlockOrientation();
+      }
+    } catch (e) {}
   }
 
-  function _exitFullscreen() { if (document.fullscreenElement) document.exitFullscreen(); }
+  function _exitFullscreen() {
+    try {
+      if (document.fullscreenElement || document.webkitFullscreenElement) {
+        (document.exitFullscreen || document.webkitExitFullscreen)?.call(document);
+      }
+    } catch (e) {}
+  }
+
+  function _lockLandscape() {
+    if (/Android|iPhone|iPad/i.test(navigator.userAgent))
+      screen.orientation?.lock('landscape').catch(() => {});
+  }
+
+  function _unlockOrientation() { screen.orientation?.unlock?.(); }
 
   return { mount, play, stop, showOverlay };
 })();
 
-// CORRECCIÓN: Exportación global para evitar SyntaxError y ReferenceError
 window.PlayerModule = PlayerModule;
