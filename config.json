@@ -1,49 +1,36 @@
 {
   "app_name": "PlayCast PRO",
-  "footer_text": "PlayCast • Televisión en vivo • 2026",
-
-  "categories": ["Todos", "Noticias", "Entretenimiento", "Deportes", "Música", "Internacional"],
-
+  "footer_text": "PlayCast PRO • Deportes en vivo • 2026",
   "channels": [
-
     {
-      "id": "liga-1-max",
-      "name": "LIGA 1 MAX",
-      "category": "Deportes",
-      "country": "PE",
-      "url": "https://embed.ksdjugfsddeports.com/embed/liga1max.html",
-      "is_vip": false,
-      "logo": ""
-    },
-
-    {
-      "id": "espn-lat",
-      "name": "ESPN",
-      "category": "Deportes",
-      "country": "US",
-      "url": "https://embed.ksdjugfsddeports.com/embed/espn.html",
-      "is_vip": false,
-      "logo": ""
-    },
-
-    {
-      "id": "mtv-lat",
-      "name": "ESPN 2",
-      "category": "Deportes",
-      "country": "US",
-      "url": "https://embed.ksdjugfsddeports.com/embed/espn2.html",
-      "is_vip": false,
+      "id": "espn-deportes",
+      "name": "ESPN Deportes",
+      "url": "",
       "logo": ""
     },
     {
-      "id": "mtv-lat",
-      "name": "ESPN 3",
-      "category": "Deportes",
-      "country": "US",
-      "url": "https://embed.ksdjugfsddeports.com/embed/espn3.html",
-      "is_vip": false,
+      "id": "fox-sports",
+      "name": "Fox Sports",
+      "url": "",
       "logo": ""
-    }    
-    
+    },
+    {
+      "id": "directv-sports",
+      "name": "DirecTV Sports",
+      "url": "",
+      "logo": ""
+    },
+    {
+      "id": "tnt-sports",
+      "name": "TNT Sports",
+      "url": "",
+      "logo": ""
+    },
+    {
+      "id": "win-sports",
+      "name": "Win Sports",
+      "url": "",
+      "logo": ""
+    }
   ]
 }

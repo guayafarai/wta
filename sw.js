@@ -1,163 +1,251 @@
 /* ═══════════════════════════════════════════════════
    PlayCast PRO — Service Worker
-   Firebase Cloud Messaging (FCM) Ready
+   - Cache-first para assets estáticos
+   - Network-first para config.json
+   - Página offline propia (nunca muestra error de GitHub)
+   - FCM push ready
    ═══════════════════════════════════════════════════ */
 
-const CACHE_NAME = 'playcast-v1';
-const STATIC_ASSETS = [
-  '/',
-  '/index.html',
-  '/player.html',
-  '/config.json',
-  '/css/base.css',
-  '/css/dashboard.css',
-  '/css/player.css',
-  '/js/app.js',
-  '/js/router.js',
-  '/js/player.js',
-  '/js/channels.js'
+const CACHE   = 'playcast-v3';
+const OFFLINE_URL = '/offline.html'; // fallback inline (ver abajo)
+
+const STATIC = [
+  './',
+  './index.html',
+  './config.json',
+  './css/base.css',
+  './css/dashboard.css',
+  './css/player.css',
+  './js/router.js',
+  './js/channels.js',
+  './js/player.js',
+  './js/app.js',
 ];
 
-/* ── Install: pre-cache static assets ── */
-self.addEventListener('install', event => {
-  event.waitUntil(
-    caches.open(CACHE_NAME).then(cache => cache.addAll(STATIC_ASSETS))
+/* ─── Install ────────────────────────────────────── */
+self.addEventListener('install', e => {
+  e.waitUntil(
+    caches.open(CACHE).then(c => {
+      // addAll con manejo de error por archivo — si uno falla no bloquea todo
+      return Promise.allSettled(STATIC.map(url => c.add(url).catch(() => {})));
+    })
   );
   self.skipWaiting();
 });
 
-/* ── Activate: clean old caches ── */
-self.addEventListener('activate', event => {
-  event.waitUntil(
+/* ─── Activate ───────────────────────────────────── */
+self.addEventListener('activate', e => {
+  e.waitUntil(
     caches.keys().then(keys =>
-      Promise.all(keys.filter(k => k !== CACHE_NAME).map(k => caches.delete(k)))
+      Promise.all(keys.filter(k => k !== CACHE).map(k => caches.delete(k)))
     )
   );
   self.clients.claim();
 });
 
-/* ── Fetch: network-first for config, cache-first for assets ── */
-self.addEventListener('fetch', event => {
-  const { request } = event;
-  const url = new URL(request.url);
+/* ─── Fetch ──────────────────────────────────────── */
+self.addEventListener('fetch', e => {
+  const req = e.request;
+  const url = new URL(req.url);
 
-  // Never intercept stream URLs or external CDNs
-  if (url.hostname !== location.hostname) return;
+  // No interceptar: streams de video, CDNs externos, APIs externas
+  if (
+    req.method !== 'GET' ||
+    !url.hostname.includes(self.location.hostname) ||
+    url.hostname !== self.location.hostname
+  ) return;
 
-  if (url.pathname === '/config.json') {
-    // Network first for config (always fresh channels)
-    event.respondWith(
-      fetch(request)
-        .then(res => {
-          const clone = res.clone();
-          caches.open(CACHE_NAME).then(c => c.put(request, clone));
-          return res;
-        })
-        .catch(() => caches.match(request))
-    );
-  } else {
-    // Cache first for static assets
-    event.respondWith(
-      caches.match(request).then(cached => cached || fetch(request))
-    );
+  // config.json → network first (datos frescos), fallback a cache
+  if (url.pathname.endsWith('config.json')) {
+    e.respondWith(_networkFirst(req));
+    return;
   }
+
+  // Assets estáticos → cache first, fallback a network
+  e.respondWith(_cacheFirst(req));
 });
 
-/* ══════════════════════════════════════════════════
-   FIREBASE CLOUD MESSAGING — Push Notification Handler
-   
-   SETUP INSTRUCTIONS:
-   1. Go to https://console.firebase.google.com
-   2. Create project → Project Settings → Cloud Messaging
-   3. Copy your VAPID key and Firebase config
-   4. Replace the placeholder below with your config
-   5. In your app, call: Notification.requestPermission()
-      then: registration.pushManager.subscribe({ userVisibleOnly: true, applicationServerKey: VAPID_KEY })
-   ══════════════════════════════════════════════════ */
+async function _networkFirst(req) {
+  try {
+    const res = await fetch(req);
+    // Solo cachear respuestas válidas (no 404, no 500)
+    if (res.ok) {
+      const cache = await caches.open(CACHE);
+      cache.put(req, res.clone());
+    }
+    // Si el servidor devuelve error (500, 503, etc.) y hay cache, usar cache
+    if (!res.ok) {
+      const cached = await caches.match(req);
+      if (cached) return cached;
+      // Si no hay cache y hubo error de servidor, devolver JSON vacío seguro
+      return new Response('{"channels":[],"footer_text":"Sin conexión"}', {
+        headers: { 'Content-Type': 'application/json' }
+      });
+    }
+    return res;
+  } catch (_) {
+    // Sin internet
+    const cached = await caches.match(req);
+    if (cached) return cached;
+    return new Response('{"channels":[],"footer_text":"Sin conexión"}', {
+      headers: { 'Content-Type': 'application/json' }
+    });
+  }
+}
 
-// Import Firebase scripts (uncomment when ready to integrate)
+async function _cacheFirst(req) {
+  const cached = await caches.match(req);
+  if (cached) return cached;
+
+  try {
+    const res = await fetch(req);
+    // No cachear errores de servidor
+    if (res.ok) {
+      const cache = await caches.open(CACHE);
+      cache.put(req, res.clone());
+    }
+    // Si es 404/500 para el HTML principal → página offline propia
+    if (!res.ok && req.destination === 'document') {
+      return _offlinePage();
+    }
+    return res;
+  } catch (_) {
+    // Sin internet → página offline propia (nunca muestra página de GitHub)
+    if (req.destination === 'document') return _offlinePage();
+    return new Response('', { status: 503 });
+  }
+}
+
+/* ─── Página offline inline ──────────────────────── */
+// No depende de ningún archivo externo — siempre funciona
+function _offlinePage() {
+  const html = `<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>PlayCast PRO — Sin conexión</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: 'DM Sans', system-ui, sans-serif;
+      background: #0b0d12;
+      color: #eaecf2;
+      min-height: 100dvh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 20px;
+      padding: 40px 20px;
+      text-align: center;
+    }
+    .icon { font-size: 4rem; }
+    h1 { font-size: 1.4rem; font-weight: 700; }
+    p  { color: #6b7280; font-size: 0.92rem; max-width: 280px; line-height: 1.6; }
+    button {
+      background: #e63946;
+      color: #fff;
+      border: none;
+      padding: 12px 32px;
+      border-radius: 8px;
+      font-size: 0.9rem;
+      font-weight: 700;
+      cursor: pointer;
+      margin-top: 8px;
+    }
+  </style>
+</head>
+<body>
+  <div class="icon">📡</div>
+  <h1>Sin conexión</h1>
+  <p>Verifica tu internet e intenta de nuevo. Tus canales te esperan.</p>
+  <button onclick="location.reload()">🔄 Reintentar</button>
+</body>
+</html>`;
+  return new Response(html, {
+    headers: { 'Content-Type': 'text/html; charset=utf-8' }
+  });
+}
+
+/* ═══════════════════════════════════════════════════
+   PUSH NOTIFICATIONS (FCM / OneSignal)
+   ═══════════════════════════════════════════════════
+   
+   OPCIÓN RECOMENDADA: OneSignal (sin servidor propio)
+   1. Registrarse en https://onesignal.com (gratis)
+   2. Crear App → Web → poner dominio de GitHub Pages
+   3. Descargar el archivo OneSignalSDKWorker.js que te dan
+   4. Subirlo a la RAÍZ de tu repositorio
+   5. Añadir en index.html antes de </body>:
+   
+      <script src="https://cdn.onesignal.com/sdks/web/v16/OneSignalSDK.page.js" defer></script>
+      <script>
+        window.OneSignalDeferred = window.OneSignalDeferred || [];
+        OneSignalDeferred.push(async function(OneSignal) {
+          await OneSignal.init({
+            appId: "TU-APP-ID-DE-ONESIGNAL",
+            notifyButton: { enable: false }, // usamos nuestro botón 🔔
+          });
+        });
+      </script>
+   
+   6. Para enviar notificación de partido:
+      Panel OneSignal → New Push → escribes título + mensaje → Send to All
+   
+   ──────────────────────────────────────────────────
+   OPCIÓN AVANZADA: Firebase Cloud Messaging (FCM)
+   Requiere servidor propio para enviar notificaciones.
+   Descomentar el bloque de abajo cuando tengas config.
+   ═══════════════════════════════════════════════════ */
+
 // importScripts('https://www.gstatic.com/firebasejs/10.0.0/firebase-app-compat.js');
 // importScripts('https://www.gstatic.com/firebasejs/10.0.0/firebase-messaging-compat.js');
-
-// firebase.initializeApp({
-//   apiKey: "YOUR_API_KEY",
-//   authDomain: "YOUR_PROJECT.firebaseapp.com",
-//   projectId: "YOUR_PROJECT_ID",
-//   storageBucket: "YOUR_PROJECT.appspot.com",
-//   messagingSenderId: "YOUR_SENDER_ID",
-//   appId: "YOUR_APP_ID"
-// });
-
+// firebase.initializeApp({ apiKey:'', authDomain:'', projectId:'', messagingSenderId:'', appId:'' });
 // const messaging = firebase.messaging();
-
 // messaging.onBackgroundMessage(payload => {
-//   const { title, body, icon, data } = payload.notification;
-//   self.registration.showNotification(title, {
-//     body,
-//     icon: icon || '/icon-192.png',
-//     badge: '/badge-72.png',
-//     data: data || {},
-//     actions: [
-//       { action: 'watch', title: '▶ Ver ahora' },
-//       { action: 'dismiss', title: 'Cerrar' }
-//     ],
-//     vibrate: [200, 100, 200],
-//     tag: 'playcast-live'
+//   self.registration.showNotification(payload.notification.title, {
+//     body: payload.notification.body,
+//     icon: payload.notification.icon || '/icon.png',
+//     data: payload.data,
+//     actions: [{ action:'watch', title:'▶ Ver ahora' }]
 //   });
 // });
 
-/* ── Manual Push Handler (without Firebase) ── */
-self.addEventListener('push', event => {
-  if (!event.data) return;
+/* ─── Push manual (sin Firebase) ────────────────── */
+self.addEventListener('push', e => {
+  if (!e.data) return;
+  let p;
+  try { p = e.data.json(); } catch { p = { title:'PlayCast PRO', body: e.data.text() }; }
 
-  let payload;
-  try { payload = event.data.json(); }
-  catch { payload = { title: 'PlayCast PRO', body: event.data.text() }; }
-
-  const options = {
-    body: payload.body || '¡Partido en vivo ahora!',
-    icon: payload.icon || '/icon-192.png',
-    badge: '/badge-72.png',
-    image: payload.image,
-    data: payload.data || {},
-    actions: [
-      { action: 'watch', title: '▶ Ver ahora' },
-      { action: 'dismiss', title: 'Cerrar' }
-    ],
-    vibrate: [200, 100, 200],
-    requireInteraction: true,
-    tag: 'playcast-match'
-  };
-
-  event.waitUntil(
-    self.registration.showNotification(payload.title || 'PlayCast PRO', options)
+  e.waitUntil(
+    self.registration.showNotification(p.title || 'PlayCast PRO', {
+      body:    p.body || '¡Partido en vivo ahora!',
+      icon:    p.icon || './favicon.ico',
+      badge:   p.badge,
+      data:    p.data || {},
+      actions: [{ action:'watch', title:'▶ Ver ahora' }, { action:'close', title:'Cerrar' }],
+      vibrate: [200, 100, 200],
+      tag:     'playcast-live',
+      requireInteraction: true,
+    })
   );
 });
 
-/* ── Notification Click Handler ── */
-self.addEventListener('notificationclick', event => {
-  event.notification.close();
+self.addEventListener('notificationclick', e => {
+  e.notification.close();
+  if (e.action === 'close') return;
 
-  const channelId = event.notification.data?.channelId;
-  const action = event.action;
-
-  if (action === 'dismiss') return;
-
-  const targetUrl = channelId
-    ? `/?channel=${channelId}`
-    : '/';
-
-  event.waitUntil(
-    clients.matchAll({ type: 'window', includeUncontrolled: true }).then(clientList => {
-      // Focus existing window if open
-      for (const client of clientList) {
-        if (client.url.includes(self.location.origin) && 'focus' in client) {
-          client.postMessage({ type: 'NAVIGATE', url: targetUrl });
-          return client.focus();
+  const target = e.notification.data?.url || './';
+  e.waitUntil(
+    clients.matchAll({ type:'window', includeUncontrolled:true }).then(list => {
+      for (const c of list) {
+        if (c.url.includes(self.location.origin) && 'focus' in c) {
+          c.postMessage({ type:'NAVIGATE', url: target });
+          return c.focus();
         }
       }
-      // Open new window
-      return clients.openWindow(targetUrl);
+      return clients.openWindow(target);
     })
   );
 });
