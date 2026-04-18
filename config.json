@@ -8,7 +8,7 @@
 
     {
       "id": "venevision",
-      "name": "Venevisión En Vivo",
+      "name": "VENEVISION",
       "category": "Entretenimiento",
       "country": "VE",
       "url": "https://venevision-blocked-cdn.encoders.immergo.tv/master.m3u8",
@@ -18,7 +18,7 @@
 
     {
       "id": "liga-1-max",
-      "name": "Liga 1 Max",
+      "name": "LIGA 1 MAX",
       "category": "Deportes",
       "country": "PE",
       "url": "https://embed.ksdjugfsddeports.com/embed/liga1max.html",
