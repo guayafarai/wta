@@ -27,7 +27,7 @@ const PlayerModule = (() => {
     _reset();
     _showLoading(true);
 
-    // Proxy para evitar el error de CORS (Carga los headers necesarios)
+    // SOLUCIÓN CORS: Solo aplica a archivos de video (.m3u8, .mpd)
     let finalUrl = url;
     if ((url.includes('.m3u8') || url.includes('.mpd')) && !url.includes('workers.dev')) {
       finalUrl = `https://playcast-proxy.elblogdevictorlam.workers.dev/?url=${encodeURIComponent(url)}`;
@@ -44,7 +44,7 @@ const PlayerModule = (() => {
     }
     showOverlay();
     
-    // Renderizar sugeridos (sección que se perdía en el diseño anterior)
+    // Actualiza la lista de recomendados sin recargar la página
     if (window.ChannelsModule) {
       const suggested = ChannelsModule.getSuggested(id || name);
       const list = document.getElementById('suggested-list');
@@ -62,7 +62,6 @@ const PlayerModule = (() => {
       hlsInstance.loadSource(url);
       hlsInstance.attachMedia(videoEl);
       hlsInstance.on(Hls.Events.MANIFEST_PARSED, () => { _showLoading(false); videoEl.play().catch(() => {}); });
-      hlsInstance.on(Hls.Events.ERROR, (_, d) => { if(d.fatal) _showLoading(false); });
     } else if (videoEl.canPlayType('application/vnd.apple.mpegurl')) {
       videoEl.src = url;
       videoEl.addEventListener('loadedmetadata', () => { _showLoading(false); videoEl.play(); });
@@ -72,7 +71,7 @@ const PlayerModule = (() => {
   function _playIframe(url) {
     iframeEl.style.display = 'block';
     iframeEl.src = url;
-    setTimeout(() => _showLoading(false), 2500);
+    setTimeout(() => _showLoading(false), 2000);
   }
 
   function _reset() {
