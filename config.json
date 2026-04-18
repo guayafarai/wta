@@ -6,43 +6,43 @@
       "id": "espn",
       "name": "ESPN",
       "url": "https://embed.ksdjugfsddeports.com/embed/espn.html",
-      "logo": ""
+      "logo": "https://upload.wikimedia.org/wikipedia/commons/thumb/2/2f/ESPN_wordmark.svg/960px-ESPN_wordmark.svg.png"
     },
     {
       "id": "espn2",
       "name": "ESPN 2",
       "url": "https://embed.ksdjugfsddeports.com/embed/espn2.html",
-      "logo": ""
+      "logo": "https://upload.wikimedia.org/wikipedia/commons/thumb/b/bf/ESPN2_logo.svg/3840px-ESPN2_logo.svg.png"
     },
     {
       "id": "espn3",
       "name": "ESPN 3",
       "url": "https://embed.ksdjugfsddeports.com/embed/espn3.html",
-      "logo": ""
+      "logo": "https://upload.wikimedia.org/wikipedia/commons/thumb/2/2b/ESPN3_logo.svg/3840px-ESPN3_logo.svg.png"
     },
    {
       "id": "dsports",
       "name": "DIRECTV SPORTS",
       "url": "https://embed.ksdjugfsddeports.com/embed/directvsports.html",
-      "logo": ""
+      "logo": "https://upload.wikimedia.org/wikipedia/commons/e/e0/DirecTV_Sports_Latin_America_-_2018_logo_v2.svg"
     },
     {
       "id": "dsports2",
       "name": "DIRECTV SPORTS 2",
       "url": "https://embed.ksdjugfsddeports.com/embed/directvsports2.html",
-      "logo": ""
+      "logo": "https://upload.wikimedia.org/wikipedia/commons/1/10/DIRECTV_Sports_2_Latin_America_%282018%29.svg"
     },
    {
       "id": "dsportsplus",
       "name": "DIRECTV SPORTS PLUS",
       "url": "https://embed.ksdjugfsddeports.com/embed/directvsportsplus.html",
-      "logo": ""
+      "logo": "https://upload.wikimedia.org/wikipedia/commons/b/be/DirecTV_Sports%2B_Latin_America_%282018%29.png"
     },
     {
       "id": "liga1max",
       "name": "LIGA 1 MAX",
       "url": "https://embed.ksdjugfsddeports.com/embed/liga1max.html",
-      "logo": ""
+      "logo": "https://upload.wikimedia.org/wikipedia/commons/thumb/3/38/L1MAX-LOGO.svg/3840px-L1MAX-LOGO.svg.png"
     }
   ]
 }
