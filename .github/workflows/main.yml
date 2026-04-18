@@ -1,0 +1,28 @@
+name: Scraper Automático NBA-MLB
+
+on:
+  schedule:
+    - cron: '0 0,12 * * *' # Corre cada 12 horas
+  workflow_dispatch: # Botón manual
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.9'
+      - name: Install dependencies
+        run: |
+          pip install -r requirements.txt
+      - name: Run scraper
+        run: python auto_scraper.py
+      - name: Commit and Push
+        run: |
+          git config --global user.name 'github-actions[bot]'
+          git config --global user.email 'github-actions[bot]@users.noreply.github.com'
+          git add nba.json mlb.json
+          git commit -m "Actualización automática" || exit 0
+          git push
