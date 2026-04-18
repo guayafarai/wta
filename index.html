@@ -11,21 +11,18 @@
 
   <title>PlayCast PRO</title>
 
-  <!-- Favicon inline — nunca da 404 -->
+  <!-- Favicon inline -->
   <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%230b0d12'/%3E%3Cpolygon points='10,8 26,16 10,24' fill='%23e63946'/%3E%3C/svg%3E">
   <link rel="shortcut icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%230b0d12'/%3E%3Cpolygon points='10,8 26,16 10,24' fill='%23e63946'/%3E%3C/svg%3E">
 
-  <!-- Fonts -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,600;9..40,700&display=swap" rel="stylesheet">
 
-  <!-- Styles -->
   <link rel="stylesheet" href="css/base.css">
   <link rel="stylesheet" href="css/dashboard.css">
   <link rel="stylesheet" href="css/player.css">
 
-  <!-- HLS & DASH -->
   <script src="https://cdn.jsdelivr.net/npm/hls.js@latest/dist/hls.min.js" defer></script>
   <script src="https://cdn.jsdelivr.net/npm/dashjs@latest/dist/dash.all.min.js" defer></script>
 </head>
@@ -44,7 +41,7 @@
         <span class="brand-badge">PRO</span>
       </div>
       <div class="header-actions">
-        <button class="icon-btn notif-btn" id="notifBtn" title="Activar notificaciones" aria-label="Activar notificaciones">
+        <button class="icon-btn notif-btn" id="notifBtn" title="Notificaciones" aria-label="Activar notificaciones">
           🔔
           <span class="notif-badge" id="notifBadge"></span>
         </button>
@@ -52,27 +49,25 @@
     </div>
   </header>
 
+  <!-- Tabs de categoría: Todos / NBA / MLB -->
+  <div class="categories-container" id="cat-tabs" role="tablist" aria-label="Categorías"></div>
+
+  <!-- Buscador -->
   <div class="search-container">
     <div class="search-box" role="search">
       <svg class="search-icon" width="18" height="18" viewBox="0 0 24 24" fill="none"
            stroke="currentColor" stroke-width="2" aria-hidden="true">
         <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
       </svg>
-      <input type="search" id="channelSearch" placeholder="Buscar canal deportivo..."
-             autocomplete="off" autocorrect="off" spellcheck="false" aria-label="Buscar canal">
+      <input type="search" id="channelSearch" placeholder="Buscar canal..."
+             autocomplete="off" autocorrect="off" spellcheck="false" aria-label="Buscar">
       <button id="clearSearch" aria-label="Limpiar">✕</button>
     </div>
   </div>
 
-<div class="categories-bar">
-  <button class="cat-btn active" data-type="all">CANALES</button>
-  <button class="cat-btn" data-type="mlb">⚾ MLB</button>
-  <button class="cat-btn" data-type="nba">🏀 NBA</button>
-</div>
-  
   <main id="dashboard-main" role="main">
     <div class="section-header">
-      <span class="section-title">⚽ EN VIVO</span>
+      <span class="section-title" id="section-title">EN VIVO</span>
       <span class="channel-count" id="channelCount"></span>
     </div>
     <div id="channel-list" class="list-view" role="list"></div>
@@ -98,22 +93,21 @@
 
     <video id="video-player" playsinline webkit-playsinline x5-playsinline preload="none"></video>
 
-    <!-- sandbox bloquea popups/redirecciones por defecto.
-         allow-scripts        → el player del embed puede ejecutar JS
-         allow-same-origin    → el embed puede acceder a sus propias cookies/storage
-         allow-forms          → algunos players usan forms internamente
-         allow-presentation   → necesario para fullscreen en algunos embeds
-         SIN allow-popups     → BLOQUEA toda ventana emergente / pestaña nueva
-         SIN allow-top-navigation → BLOQUEA redirecciones de la página principal -->
+    <!--
+      sandbox bloquea popups/redirecciones a nivel de navegador:
+      - allow-scripts        → el player del embed puede ejecutar JS
+      - allow-same-origin    → el embed puede usar sus propias cookies
+      - allow-forms          → algunos players usan forms internamente
+      - allow-presentation   → necesario para fullscreen en embeds
+      SIN allow-popups       → BLOQUEA toda ventana emergente
+      SIN allow-top-navigation → BLOQUEA redirecciones de la página
+    -->
     <iframe id="iframe-player"
             sandbox="allow-scripts allow-same-origin allow-forms allow-presentation"
             allow="autoplay; encrypted-media; fullscreen; picture-in-picture"
             referrerpolicy="no-referrer"
             title="Canal embebido">
     </iframe>
-
-    <!-- Capa ad-blocker: cubre posibles banners flotantes sobre el iframe -->
-    <div id="ad-shield"></div>
 
     <div id="stream-loading" role="status">
       <div class="spinner"></div>
@@ -152,7 +146,6 @@
 
   </div><!-- /video-wrapper -->
 
-  <!-- Canales sugeridos (aleatorios) -->
   <div id="player-sidebar">
     <div class="player-info-panel">
       <h2 id="sidebar-channel-name">Canal</h2>
@@ -169,14 +162,5 @@
 <script src="js/channels.js"></script>
 <script src="js/player.js"></script>
 <script src="js/app.js"></script>
-<script src="https://cdn.onesignal.com/sdks/web/v16/OneSignalSDK.page.js" defer></script>
-<script>
-  window.OneSignalDeferred = window.OneSignalDeferred || [];
-  OneSignalDeferred.push(async function(OneSignal) {
-    await OneSignal.init({
-      appId: "cdb55816-df98-4336-9357-85fe1bd60fbb",
-    });
-  });
-</script>
 </body>
 </html>
