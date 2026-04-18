@@ -28,45 +28,38 @@
         "logo": ""
     },
     {
-        "id": "mamelodi-sundowns-vs-esperance-tunis--caf-champions-league-14-00",
+        "id": "polokwane-vs-kaizer-chiefs--south-africa-betway-premiership-16-30",
         "category": "FUTBOL",
-        "name": "Mamelodi Sundowns vs Esperance Tunis\n CAF Champions League 14:00",
-        "url": "http://195.178.110.55/hls/KKKKQ.m3u8",
-        "logo": ""
-    },
-    {
-        "id": "orlando-pirates-vs-amazulu--south-africa-betway-premiership-14-00",
-        "category": "FUTBOL",
-        "name": "Orlando Pirates vs AmaZulu\n South Africa Betway Premiership 14:00",
+        "name": "Polokwane vs Kaizer Chiefs\n South Africa Betway Premiership 16:30",
         "url": "http://195.178.110.55/hls/KKKK.m3u8",
         "logo": ""
     },
     {
-        "id": "hammarby-vs-orgryte--sweden-allsvenskan-14-00",
+        "id": "lorient-vs-marseille--ligue-1-france-16-00",
         "category": "FUTBOL",
-        "name": "Hammarby vs Orgryte\n Sweden Allsvenskan 14:00",
-        "url": "http://195.178.110.40/hls/HYHYHYQQ.m3u8",
+        "name": "Lorient vs Marseille\n Ligue 1 France 16:00",
+        "url": "https://z.zgdyoqa.shop/hls/POPOPOQQ.m3u8",
         "logo": ""
     },
     {
-        "id": "halmstad-vs-goteborg--sweden-allsvenskan-14-00",
+        "id": "wolfsberger-ac-vs-bw-stuttgart--austria-bundesliga-16-00",
         "category": "FUTBOL",
-        "name": "Halmstad vs Goteborg\n Sweden Allsvenskan 14:00",
-        "url": "http://195.178.110.40/hls/HYHYHYQQQ.m3u8",
+        "name": "Wolfsberger AC vs BW Stuttgart\n Austria Bundesliga 16:00",
+        "url": "https://z.zgdyoqa.shop/hls/POPOPOQ.m3u8",
         "logo": ""
     },
     {
-        "id": "sirius-vs-vasteras-sk--sweden-allsvenskan-14-00",
+        "id": "tirol-vs-altach--austria-bundesliga-16-00",
         "category": "FUTBOL",
-        "name": "Sirius vs Vasteras SK\n Sweden Allsvenskan 14:00",
-        "url": "http://195.178.110.52/hls/HYHYHYQ.m3u8",
+        "name": "Tirol vs Altach\n Austria Bundesliga 16:00",
+        "url": "https://z.zgdyoqa.shop/hls/POPOPO.m3u8",
         "logo": ""
     },
     {
-        "id": "mjallby-vs-brommapojkarna--sweden-allsvenskan-14-00",
+        "id": "exeter-chiefs-vs-northampton-saints--english-premiership-rugby-15-05",
         "category": "FUTBOL",
-        "name": "Mjallby vs Brommapojkarna\n Sweden Allsvenskan 14:00",
-        "url": "http://195.178.110.52/hls/HYHYHY.m3u8",
+        "name": "Exeter Chiefs vs Northampton Saints\n English Premiership Rugby 15:05",
+        "url": "https://z.zgdyoqa.shop/hls/SHHH.m3u8",
         "logo": ""
     },
     {
@@ -102,55 +95,6 @@
         "category": "FUTBOL",
         "name": "Bayer Leverkusen vs Augsburg\n German Bundesliga 14:30",
         "url": "https://z.zgdyoqa.shop/hls/YIII.m3u8",
-        "logo": ""
-    },
-    {
-        "id": "udinese-vs-parma--italy-serie-a-14-00",
-        "category": "FUTBOL",
-        "name": "Udinese vs Parma\n Italy Serie A 14:00",
-        "url": "https://z.zgdyoqa.shop/hls/faaa.m3u8",
-        "logo": ""
-    },
-    {
-        "id": "metalist-1925-vs-kudrivka--ukraine-premier-league-13-30",
-        "category": "FUTBOL",
-        "name": "Metalist 1925 vs Kudrivka\n Ukraine Premier League 13:30",
-        "url": "https://z.zgdyoqa.shop/hls/zfffqqqqq.m3u8",
-        "logo": ""
-    },
-    {
-        "id": "krylya-sovetov-vs-cska-moscow--russia-premier-league-12-30",
-        "category": "FUTBOL",
-        "name": "Krylya Sovetov vs CSKA Moscow\n Russia Premier League 12:30",
-        "url": "https://z.zgdyoqa.shop/hls/ZYYYQQQ.m3u8",
-        "logo": ""
-    },
-    {
-        "id": "sg-dynamo-dresden-vs-bochum--german-2-bundesliga-12-00",
-        "category": "FUTBOL",
-        "name": "SG Dynamo Dresden vs Bochum\n German 2 Bundesliga 12:00",
-        "url": "https://z.zgdyoqa.shop/hls/UTTTQQ.m3u8",
-        "logo": ""
-    },
-    {
-        "id": "magdeburg-vs-fortuna-dusseldorf--german-2-bundesliga-12-00",
-        "category": "FUTBOL",
-        "name": "Magdeburg vs Fortuna Dusseldorf\n German 2 Bundesliga 12:00",
-        "url": "https://z.zgdyoqa.shop/hls/UTTTQ.m3u8",
-        "logo": ""
-    },
-    {
-        "id": "arminia-bielefeld-vs-nurnberg--german-2-bundesliga-12-00",
-        "category": "FUTBOL",
-        "name": "Arminia Bielefeld vs Nurnberg\n German 2 Bundesliga 12:00",
-        "url": "https://z.zgdyoqa.shop/hls/UTTT.m3u8",
-        "logo": ""
-    },
-    {
-        "id": "kolos-kovalivka-vs-lnz-cherkasy--ukraine-premier-league-11-00",
-        "category": "FUTBOL",
-        "name": "Kolos Kovalivka vs LNZ Cherkasy\n Ukraine Premier League 11:00",
-        "url": "http://195.178.110.52/hls/HLLL.m3u8",
         "logo": ""
     }
 ]
