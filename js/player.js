@@ -55,6 +55,13 @@ const PlayerModule = (() => {
     _showLoading(true);
     _showError(false);
 
+    // Mixed Content fix: si la página es HTTPS y el stream es HTTP,
+    // intentar https:// primero — la mayoría de servidores lo aceptan
+    if (location.protocol === 'https:' && url.startsWith('http://')) {
+      url = url.replace('http://', 'https://');
+      lastUrl = url; // actualizar para que el retry también use https
+    }
+
     // Detectar tipo por extensión o dominio conocido
     const isIframe = /youtube\.com|youtu\.be|facebook\.com|twitch\.tv|dailymotion\.com|\/embed\//i.test(url)
                   || /\.html?($|\?)/i.test(url);
@@ -219,7 +226,11 @@ const PlayerModule = (() => {
   }
 
   function _exitFullscreen() {
-    try { (document.exitFullscreen || document.webkitExitFullscreen)?.call(document); } catch (e) {}
+    try {
+      if (document.fullscreenElement || document.webkitFullscreenElement) {
+        (document.exitFullscreen || document.webkitExitFullscreen)?.call(document);
+      }
+    } catch (e) {}
   }
 
   function _lockLandscape() {
