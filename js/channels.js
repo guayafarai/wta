@@ -1,17 +1,16 @@
 /* ═══════════════════════════════════════════════════
-   PlayCast PRO — Channels Module
-   Solo canales deportivos. Sin categorías, sin VIP,
-   sin país, sin cuadrícula. Lista pura.
+   PlayCast PRO — Channels Module (Updated)
+   Carga dinámica de canales, MLB y NBA.
    ═══════════════════════════════════════════════════ */
 
 const ChannelsModule = (() => {
-  let allChannels  = [];
-  let searchTerm   = '';
-  let configData   = null;
+  let allChannels     = [];
+  let searchTerm      = '';
+  let currentCategory = 'all'; 
+  let configData      = null;
   let listEl, emptyStateEl, channelCountEl;
 
-  // ── Conteo de reproducciones (para "más vistos") ──
-  // Guardado en localStorage como { channelId: count }
+  // ── Conteo de reproducciones ──
   let viewCounts = JSON.parse(localStorage.getItem('playcast_views') || '{}');
 
   function _incView(id) {
@@ -23,33 +22,70 @@ const ChannelsModule = (() => {
     return viewCounts[id] || 0;
   }
 
-  // ── Cargar config.json ────────────────────────────
+  // ── Carga Multifuente (config, mlb, nba) ──
   async function load() {
     try {
-      // Cache-busting leve para GitHub Pages (evita que sirva versión vieja)
-      const res = await fetch('config.json?v=' + Date.now());
-      if (!res.ok) throw new Error(`HTTP ${res.status}`);
-      configData  = await res.json();
-      allChannels = (configData.channels || []).filter(ch => !!ch.name);
+      const v = Date.now();
+      // Cargamos los 3 JSON que existen en el repositorio
+      const [resConfig, resMlb, resNba] = await Promise.all([
+        fetch(`config.json?v=${v}`),
+        fetch(`mlb.json?v=${v}`),
+        fetch(`nba.json?v=${v}`)
+      ]);
+
+      // Validamos y extraemos datos
+      const dataConfig = resConfig.ok ? await resConfig.json() : { channels: [] };
+      const dataMlb    = resMlb.ok    ? await resMlb.json()    : [];
+      const dataNba    = resNba.ok    ? await resNba.json()    : [];
+
+      // Mapeamos para asignar categorías internas
+      const general = (dataConfig.channels || []).map(ch => ({ ...ch, category: 'all' }));
+      const mlb     = (Array.isArray(dataMlb) ? dataMlb : []).map(ch => ({ ...ch, category: 'mlb' }));
+      const nba     = (Array.isArray(dataNba) ? dataNba : []).map(ch => ({ ...ch, category: 'nba' }));
+
+      // Unificamos la lista completa
+      allChannels = [...general, ...mlb, ...nba].filter(ch => !!ch.name);
+      
+      configData = dataConfig;
       return configData;
     } catch (err) {
-      console.error('[Channels] Error cargando config:', err);
+      console.error('[Channels] Error cargando múltiples fuentes:', err);
       return null;
     }
   }
 
-  // ── Montar en el dashboard ────────────────────────
   function mount() {
     listEl         = document.getElementById('channel-list');
     emptyStateEl   = document.getElementById('emptyState');
     channelCountEl = document.getElementById('channelCount');
     if (!listEl) return;
-    renderChannels(allChannels);
+    _filterAndRender();
   }
 
-  // ── Render lista ──────────────────────────────────
-  function renderChannels(channels) {
+  // ── Filtrado y Renderizado ──
+  function setCategory(cat) {
+    currentCategory = cat;
+    _filterAndRender();
+  }
+
+  function setSearch(term) {
+    searchTerm = term.toLowerCase().trim();
+    _filterAndRender();
+  }
+
+  function _filterAndRender() {
     if (!listEl) return;
+
+    const filtered = allChannels.filter(ch => {
+      const matchSearch = !searchTerm || ch.name.toLowerCase().includes(searchTerm);
+      const matchCat    = currentCategory === 'all' || ch.category === currentCategory;
+      return matchSearch && matchCat;
+    });
+
+    renderChannels(filtered);
+  }
+
+  function renderChannels(channels) {
     listEl.innerHTML = '';
 
     const isEmpty = channels.length === 0;
@@ -103,36 +139,22 @@ const ChannelsModule = (() => {
 
   function _handlePlay(ch) {
     if (!ch.url) {
-      showToast(`${ch.name} — Próximamente`);
+      if (typeof showToast === 'function') showToast(`${ch.name} — Próximamente`);
       return;
     }
     _incView(ch.id || ch.name);
-    Router.navigate('/player', { id: ch.id || '', name: ch.name, url: ch.url });
+    if (typeof Router !== 'undefined') {
+      Router.navigate('/player', { id: ch.id || '', name: ch.name, url: ch.url });
+    }
   }
 
-  // ── Búsqueda ──────────────────────────────────────
-  function setSearch(term) {
-    searchTerm = term.toLowerCase().trim();
-    _filterAndRender();
-  }
-
-  function _filterAndRender() {
-    const filtered = allChannels.filter(ch =>
-      !searchTerm || ch.name.toLowerCase().includes(searchTerm)
-    );
-    renderChannels(filtered);
-  }
-
-  // ── Canales sugeridos (aleatorio con sesgo en más vistos) ──
   function getSuggested(excludeId, count = 6) {
     const pool = allChannels.filter(ch => (ch.id || ch.name) !== excludeId && ch.url);
     if (pool.length === 0) return [];
 
-    // Ordenar mezclando aleatoriedad con popularidad
     const sorted = [...pool].sort((a, b) => {
       const vA = _getViewCount(a.id || a.name);
       const vB = _getViewCount(b.id || b.name);
-      // 70% peso popularidad, 30% aleatorio
       const scoreA = vA * 0.7 + Math.random() * 0.3;
       const scoreB = vB * 0.7 + Math.random() * 0.3;
       return scoreB - scoreA;
@@ -153,6 +175,7 @@ const ChannelsModule = (() => {
     load,
     mount,
     setSearch,
+    setCategory,
     getById,
     getSuggested,
     get all() { return allChannels; },
