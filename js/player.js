@@ -1,7 +1,7 @@
 /* ═══════════════════════════════════════════════════
    PlayCast PRO — Player Module
    Soporta: HLS (.m3u8), DASH (.mpd), iframe, MP4
-   CORREGIDO: Salto de CORS con Proxy Personalizado
+   CORREGIDO: Salto de CORS con Proxy de Cloudflare
    ═══════════════════════════════════════════════════ */
 
 const PlayerModule = (() => {
@@ -16,7 +16,6 @@ const PlayerModule = (() => {
   let overlayTimer = null;
   let mounted      = false;
 
-  // ── Mount ─────────────────────────────────────────
   function mount() {
     if (mounted) return;
     mounted = true;
@@ -39,26 +38,13 @@ const PlayerModule = (() => {
     });
 
     document.getElementById('video-wrapper')?.addEventListener('click', toggleOverlay);
-    
-    document.addEventListener('keydown', e => {
-      if (e.key === 'Escape') { stop(); Router.navigate('/'); }
-    });
   }
 
-  // ── Play ──────────────────────────────────────────
   function play(url, name, id) {
-    if (!url) {
-      _showError('URL no disponible', 'Verifica el enlace en el archivo JSON.');
-      return;
-    }
-
-    lastUrl  = url;
-    lastName = name || 'En vivo';
-    lastId   = id   || '';
+    if (!url) return;
+    lastUrl = url; lastName = name || 'En vivo'; lastId = id || '';
 
     if (channelNameEl) channelNameEl.textContent = lastName;
-    if (sidebarNameEl) sidebarNameEl.textContent = lastName;
-
     _reset();
     _showLoading(true);
     _showError(false);
@@ -67,86 +53,69 @@ const PlayerModule = (() => {
     const isStreamFile = /\.m3u8($|\?)/i.test(url) || /\.mpd($|\?)/i.test(url);
     let finalUrl = url;
 
-    if (isStreamFile) {
-      // Usando tu Worker de Cloudflare personalizado
+    if (isStreamFile && !url.includes('workers.dev')) {
+      // Usando tu Worker de Cloudflare
       finalUrl = `https://playcast-proxy.elblogdevictorlam.workers.dev/?url=${encodeURIComponent(url)}`;
     }
-    // ───────────────────────────────────────
 
-    const isIframe = /youtube\.com|youtu\.be|facebook\.com|twitch\.tv|dailymotion\.com|\/embed\//i.test(finalUrl)
-                  || /\.html?($|\?)/i.test(finalUrl);
-    const isDash   = /\.mpd($|\?)/i.test(finalUrl);
-    const isHLS    = /\.m3u8($|\?)/i.test(finalUrl);
-
-    if (isIframe)      _playIframe(finalUrl);
-    else if (isDash)   _playDash(finalUrl);
-    else if (isHLS)    _playHLS(finalUrl);
-    else               _playDirect(finalUrl);
+    const isIframe = /youtube\.com|youtu\.be|facebook\.com|twitch\.tv|\/embed\//i.test(finalUrl);
+    
+    if (isIframe) {
+      _playIframe(finalUrl);
+    } else if (finalUrl.includes('.mpd')) {
+      _playDash(finalUrl);
+    } else if (finalUrl.includes('.m3u8')) {
+      _playHLS(finalUrl);
+    } else {
+      _playDirect(finalUrl);
+    }
 
     showOverlay();
   }
 
-  function stop() {
-    _reset();
-    _exitFullscreen();
-  }
-
-  function _reset() {
-    hlsInstance?.destroy();  hlsInstance  = null;
-    dashInstance?.reset();   dashInstance = null;
-
-    if (videoEl) {
-      videoEl.pause();
-      videoEl.removeAttribute('src');
-      videoEl.load();
-      videoEl.style.display = 'none';
-    }
-    if (iframeEl) {
-      iframeEl.src           = '';
-      iframeEl.style.display = 'none';
-    }
-    clearOverlayTimer();
-  }
-
-  // ── Handlers de Reproducción ──────────────────────
   function _playHLS(url) {
     videoEl.style.display = 'block';
     if (typeof Hls !== 'undefined' && Hls.isSupported()) {
-      hlsInstance = new Hls({
-        xhrSetup: xhr => { 
-          // Importante para que el proxy no bloquee por falta de cabeceras
-          xhr.withCredentials = false; 
-        }
-      });
+      hlsInstance = new Hls({ xhrSetup: xhr => { xhr.withCredentials = false; } });
       hlsInstance.loadSource(url);
       hlsInstance.attachMedia(videoEl);
       hlsInstance.on(Hls.Events.MANIFEST_PARSED, () => {
         _showLoading(false);
         videoEl.play().catch(() => {});
       });
-      hlsInstance.on(Hls.Events.ERROR, (_, data) => {
-        if (data.fatal) _showError('Error de Señal', 'El enlace no es compatible o el servidor lo bloqueó.');
-      });
+      hlsInstance.on(Hls.Events.ERROR, (_, d) => { if (d.fatal) _showError('Sin señal', 'Error de red o CORS'); });
     } else if (videoEl.canPlayType('application/vnd.apple.mpegurl')) {
       videoEl.src = url;
-      videoEl.addEventListener('loadedmetadata', () => {
-        _showLoading(false);
-        videoEl.play().catch(() => {});
+      videoEl.addEventListener('loadedmetadata', () => { 
+        _showLoading(false); 
+        videoEl.play().catch(() => {}); 
       }, { once: true });
     }
   }
+
+  function _reset() {
+    hlsInstance?.destroy(); hlsInstance = null;
+    dashInstance?.reset(); dashInstance = null;
+    if (videoEl) { 
+      videoEl.pause(); videoEl.removeAttribute('src'); 
+      videoEl.load(); videoEl.style.display = 'none'; 
+    }
+    if (iframeEl) { iframeEl.src = ''; iframeEl.style.display = 'none'; }
+    clearOverlayTimer();
+  }
+
+  function stop() { _reset(); }
 
   function _playDash(url) {
     videoEl.style.display = 'block';
     dashInstance = dashjs.MediaPlayer().create();
     dashInstance.initialize(videoEl, url, true);
-    dashInstance.on(dashjs.MediaPlayer.events.STREAM_INITIALIZED, () => _showLoading(false));
+    dashInstance.on('streamInitialized', () => _showLoading(false));
   }
 
   function _playIframe(url) {
     iframeEl.style.display = 'block';
     iframeEl.src = url;
-    // Los iframes no suelen dar error de carga detectable fácilmente, quitamos loading tras 3s
     setTimeout(() => _showLoading(false), 3000);
   }
 
@@ -156,30 +125,20 @@ const PlayerModule = (() => {
     videoEl.play().then(() => _showLoading(false)).catch(() => {});
   }
 
-  // ── UI Helpers ────────────────────────────────────
-  function _showError(title, msg) {
+  function _showError(t, m) {
     _showLoading(false);
     if (!errorEl) return;
-    if (title === false) { errorEl.classList.remove('visible'); return; }
-    document.getElementById('error-title').textContent = title;
-    document.getElementById('error-msg').textContent = msg;
+    if (t === false) { errorEl.classList.remove('visible'); return; }
+    document.getElementById('error-title').textContent = t;
+    document.getElementById('error-msg').textContent = m;
     errorEl.classList.add('visible');
   }
 
   function _showLoading(v) { loadingEl?.classList.toggle('visible', v); }
-
-  function showOverlay() {
-    overlayEl?.classList.add('visible');
-    clearOverlayTimer();
-    overlayTimer = setTimeout(() => overlayEl?.classList.remove('visible'), 4000);
-  }
-
-  function toggleOverlay() {
-    overlayEl?.classList.contains('visible') ? overlayEl.classList.remove('visible') : showOverlay();
-  }
-
+  function showOverlay() { overlayEl?.classList.add('visible'); clearOverlayTimer(); overlayTimer = setTimeout(() => overlayEl?.classList.remove('visible'), 4000); }
+  function toggleOverlay() { overlayEl?.classList.contains('visible') ? overlayEl.classList.remove('visible') : showOverlay(); }
   function clearOverlayTimer() { if (overlayTimer) { clearTimeout(overlayTimer); overlayTimer = null; } }
-
+  
   async function toggleFullscreen() {
     const w = document.getElementById('video-wrapper');
     if (!document.fullscreenElement && !document.webkitFullscreenElement) {
@@ -189,10 +148,8 @@ const PlayerModule = (() => {
     }
   }
 
-  function _exitFullscreen() { if (document.fullscreenElement) document.exitFullscreen(); }
-
   return { mount, play, stop, showOverlay };
 })();
 
-// CORRECCIÓN: Exportación global para evitar SyntaxError y ReferenceError
+// Exportación global para que app.js lo reconozca
 window.PlayerModule = PlayerModule;
