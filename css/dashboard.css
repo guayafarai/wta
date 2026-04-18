@@ -85,6 +85,8 @@
   overflow-x: auto;
   scrollbar-width: none;
   -ms-overflow-style: none;
+  /* Asegura visibilidad aunque esté vacío durante carga */
+  min-height: 36px;
 }
 .categories-container::-webkit-scrollbar { display: none; }
 
