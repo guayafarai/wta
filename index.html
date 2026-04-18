@@ -8,8 +8,7 @@
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <meta name="format-detection" content="telephone=no">
-<meta name="referrer" content="no-referrer">
-  
+
   <title>PlayCast PRO</title>
 
   <!-- Favicon inline -->
@@ -95,16 +94,13 @@
     <video id="video-player" playsinline webkit-playsinline x5-playsinline preload="none"></video>
 
     <!--
-      sandbox bloquea popups/redirecciones a nivel de navegador:
-      - allow-scripts        → el player del embed puede ejecutar JS
-      - allow-forms          → algunos players usan forms internamente
-      - allow-presentation   → necesario para fullscreen en embeds
-      SIN allow-same-origin  → evita warning "can escape its sandboxing"
-      SIN allow-popups       → BLOQUEA toda ventana emergente
-      SIN allow-top-navigation → BLOQUEA redirecciones de la página
+      Sandbox: bloquea popups y redirecciones.
+      allow-same-origin es necesario para embeds HTML que usan
+      cookies/tokens propios para autenticar el stream interno.
+      El warning "can escape sandboxing" es informativo, no un error.
     -->
     <iframe id="iframe-player"
-            sandbox="allow-scripts allow-forms allow-presentation"
+            sandbox="allow-scripts allow-same-origin allow-forms allow-presentation"
             allow="autoplay; encrypted-media; fullscreen; picture-in-picture"
             referrerpolicy="no-referrer"
             title="Canal embebido">
