@@ -28,9 +28,9 @@
         "logo": ""
     },
     {
-        "id": "colorado-rapids-vs-inter-miami--mls-league-21-30",
+        "id": "colorado-rapids-vs-inter-miami-----ch-1--mls-league-21-30",
         "category": "FUTBOL",
-        "name": "Colorado Rapids vs Inter Miami\n MLS League 21:30",
+        "name": "Colorado Rapids vs Inter Miami --- CH 1\n MLS League 21:30",
         "url": "https://s.zekll.shop/hls/FMMMQQQQqQQ.m3u8",
         "logo": ""
     },
@@ -42,24 +42,45 @@
         "logo": ""
     },
     {
-        "id": "lille-vs-nice--ligue-1-france-20-05",
+        "id": "lille-vs-nice-----ch-1--ligue-1-france-20-05",
         "category": "FUTBOL",
-        "name": "Lille vs Nice\n Ligue 1 France 20:05",
+        "name": "Lille vs Nice --- CH 1\n Ligue 1 France 20:05",
+        "url": "http://93.123.109.249/hls/UCCCQQQQQ.m3u8",
+        "logo": ""
+    },
+    {
+        "id": "lille-vs-nice-----ch-2--ligue-1-france-20-05",
+        "category": "FUTBOL",
+        "name": "Lille vs Nice --- CH 2\n Ligue 1 France 20:05",
         "url": "https://s.zekll.shop/hls/UCCCQQQQQ.m3u8",
         "logo": ""
     },
     {
-        "id": "atletico-madrid-vs-real-sociedad--spanish-copa-del-rey-20-00",
+        "id": "atletico-madrid-vs-real-sociedad-----ch-2--spanish-copa-del-rey-20-00",
         "category": "FUTBOL",
-        "name": "Atletico Madrid vs Real Sociedad\n Spanish Copa del Rey 20:00",
+        "name": "Atletico Madrid vs Real Sociedad --- CH 2\n Spanish Copa del Rey 20:00",
+        "url": "http://93.123.109.249/hls/UCCCQQQQ.m3u8",
+        "logo": ""
+    },
+    {
+        "id": "atletico-madrid-vs-real-sociedad-----ch-1--spanish-copa-del-rey-20-00",
+        "category": "FUTBOL",
+        "name": "Atletico Madrid vs Real Sociedad --- CH 1\n Spanish Copa del Rey 20:00",
         "url": "https://s.zetiyuiyu.shop/hls/UCCCQQQQ.m3u8",
         "logo": ""
     },
     {
-        "id": "berkane-vs-far-rabat--caf-champions-league-20-00",
+        "id": "berkane-vs-far-rabat-----ch-1--caf-champions-league-20-00",
         "category": "FUTBOL",
-        "name": "Berkane vs FAR Rabat\n CAF Champions League 20:00",
+        "name": "Berkane vs FAR Rabat --- CH 1\n CAF Champions League 20:00",
         "url": "https://s.zekll.shop/hls/UCCCQQQ.m3u8",
+        "logo": ""
+    },
+    {
+        "id": "berkane-vs-far-rabat-----ch-2--caf-champions-league-20-00",
+        "category": "FUTBOL",
+        "name": "Berkane vs FAR Rabat --- CH 2\n CAF Champions League 20:00",
+        "url": "http://93.123.109.249/hls/UCCCQQQ.m3u8",
         "logo": ""
     },
     {
@@ -88,20 +109,6 @@
         "category": "FUTBOL",
         "name": "CF Montreal vs New York Red Bulls\n MLS League 19:30",
         "url": "https://s.zekll.shop/hls/ZIIIZ.m3u8",
-        "logo": ""
-    },
-    {
-        "id": "arab-contractors-vs-el-gaish--egypt-premier-league-19-00",
-        "category": "FUTBOL",
-        "name": "Arab Contractors vs El Gaish\n Egypt Premier League 19:00",
-        "url": "https://s.zekll.shop/hls/ZKKKZZ.m3u8",
-        "logo": ""
-    },
-    {
-        "id": "wadi-degla-vs-national-bank-egypt--egypt-premier-league-19-00",
-        "category": "FUTBOL",
-        "name": "Wadi Degla vs National Bank Egypt\n Egypt Premier League 19:00",
-        "url": "https://s.zekll.shop/hls/ZKKKZ.m3u8",
         "logo": ""
     }
 ]
