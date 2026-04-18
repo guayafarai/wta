@@ -27,7 +27,7 @@ const PlayerModule = (() => {
     _reset();
     _showLoading(true);
 
-    // Proxy solo para archivos de video directo que suelen dar error de CORS
+    // Proxy para evitar el error de CORS (Carga los headers necesarios)
     let finalUrl = url;
     if ((url.includes('.m3u8') || url.includes('.mpd')) && !url.includes('workers.dev')) {
       finalUrl = `https://playcast-proxy.elblogdevictorlam.workers.dev/?url=${encodeURIComponent(url)}`;
@@ -43,6 +43,16 @@ const PlayerModule = (() => {
       _playHLS(finalUrl);
     }
     showOverlay();
+    
+    // Renderizar sugeridos (sección que se perdía en el diseño anterior)
+    if (window.ChannelsModule) {
+      const suggested = ChannelsModule.getSuggested(id || name);
+      const list = document.getElementById('suggested-list');
+      if (list) {
+        list.innerHTML = '';
+        suggested.forEach(ch => list.appendChild(ChannelsModule.createCard(ch, true)));
+      }
+    }
   }
 
   function _playHLS(url) {
@@ -52,7 +62,7 @@ const PlayerModule = (() => {
       hlsInstance.loadSource(url);
       hlsInstance.attachMedia(videoEl);
       hlsInstance.on(Hls.Events.MANIFEST_PARSED, () => { _showLoading(false); videoEl.play().catch(() => {}); });
-      hlsInstance.on(Hls.Events.ERROR, (_, data) => { if(data.fatal) _showLoading(false); });
+      hlsInstance.on(Hls.Events.ERROR, (_, d) => { if(d.fatal) _showLoading(false); });
     } else if (videoEl.canPlayType('application/vnd.apple.mpegurl')) {
       videoEl.src = url;
       videoEl.addEventListener('loadedmetadata', () => { _showLoading(false); videoEl.play(); });
