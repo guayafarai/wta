@@ -7,16 +7,6 @@
   "channels": [
 
     {
-      "id": "venevision",
-      "name": "VENEVISION",
-      "category": "Entretenimiento",
-      "country": "VE",
-      "url": "https://venevision-blocked-cdn.encoders.immergo.tv/master.m3u8",
-      "is_vip": false,
-      "logo": ""
-    },
-
-    {
       "id": "liga-1-max",
       "name": "LIGA 1 MAX",
       "category": "Deportes",
@@ -38,23 +28,13 @@
 
     {
       "id": "mtv-lat",
-      "name": "MTV Latino",
-      "category": "Música",
+      "name": "ESPN 2",
+      "category": "Deportes",
       "country": "US",
-      "url": "",
+      "url": "https://embed.ksdjugfsddeports.com/embed/espn2.html",
       "is_vip": false,
       "logo": ""
     },
-
-    {
-      "id": "vip-premium",
-      "name": "Servidor Premium HD",
-      "category": "Internacional",
-      "country": "★",
-      "url": "",
-      "is_vip": true,
-      "logo": ""
-    }
 
   ]
 }
