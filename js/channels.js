@@ -49,7 +49,12 @@ const ChannelsModule = (() => {
     try {
       const res = await fetch(file + '?v=' + Date.now());
       if (!res.ok) return null;
-      return await res.json();
+      const data = await res.json();
+      // Soportar dos formatos:
+      // 1. { "channels": [...] }  ← formato estándar
+      // 2. [...]                  ← array directo (ej: futbol.json)
+      if (Array.isArray(data)) return { channels: data };
+      return data;
     } catch (e) {
       console.warn('[Channels] No se pudo cargar', file);
       return null;
