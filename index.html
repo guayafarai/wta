@@ -96,14 +96,14 @@
     <!--
       sandbox bloquea popups/redirecciones a nivel de navegador:
       - allow-scripts        → el player del embed puede ejecutar JS
-      - allow-same-origin    → el embed puede usar sus propias cookies
       - allow-forms          → algunos players usan forms internamente
       - allow-presentation   → necesario para fullscreen en embeds
+      SIN allow-same-origin  → evita warning "can escape its sandboxing"
       SIN allow-popups       → BLOQUEA toda ventana emergente
       SIN allow-top-navigation → BLOQUEA redirecciones de la página
     -->
     <iframe id="iframe-player"
-            sandbox="allow-scripts allow-same-origin allow-forms allow-presentation"
+            sandbox="allow-scripts allow-forms allow-presentation"
             allow="autoplay; encrypted-media; fullscreen; picture-in-picture"
             referrerpolicy="no-referrer"
             title="Canal embebido">
