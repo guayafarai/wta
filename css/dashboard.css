@@ -126,10 +126,41 @@
 }
 #clearSearch.visible { display: block; }
 
+/* ─── [NUEVO] Categories Bar ─── */
+.categories-bar {
+  display: flex;
+  gap: 10px;
+  padding: 12px 20px;
+  max-width: var(--max-width);
+  margin: 0 auto;
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+.categories-bar::-webkit-scrollbar { display: none; }
+
+.cat-btn {
+  background: var(--bg-3);
+  color: var(--text-dim);
+  border: 1px solid var(--border);
+  padding: 8px 18px;
+  border-radius: var(--radius-pill);
+  font-size: 0.82rem;
+  font-weight: 600;
+  white-space: nowrap;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.cat-btn.active {
+  background: var(--red);
+  border-color: var(--red);
+  color: #fff;
+}
+
 /* ─── Main ───────────────────────────────────────── */
 #dashboard-main {
   max-width: var(--max-width);
-  margin: 16px auto 0;
+  margin: 10px auto 0;
   padding: 0 20px 90px;
 }
 
@@ -153,7 +184,7 @@
   font-weight: 500;
 }
 
-/* ─── Channel List (solo vista lista) ────────────── */
+/* ─── Channel List ─── */
 #channel-list.list-view {
   display: flex;
   flex-direction: column;
@@ -174,17 +205,6 @@
 }
 .channel-card:active { transform: scale(0.99); border-color: rgba(230,57,70,0.4); }
 
-/* ─── Stagger ────────────────────────────────────── */
-.channel-card:nth-child(1) { animation-delay: 0.03s; }
-.channel-card:nth-child(2) { animation-delay: 0.06s; }
-.channel-card:nth-child(3) { animation-delay: 0.09s; }
-.channel-card:nth-child(4) { animation-delay: 0.12s; }
-.channel-card:nth-child(5) { animation-delay: 0.15s; }
-.channel-card:nth-child(6) { animation-delay: 0.18s; }
-.channel-card:nth-child(7) { animation-delay: 0.21s; }
-.channel-card:nth-child(8) { animation-delay: 0.24s; }
-
-/* ─── Card Elements ──────────────────────────────── */
 .channel-logo {
   width: 44px; height: 44px;
   border-radius: var(--radius-sm);
@@ -228,7 +248,6 @@
   flex-shrink: 0;
 }
 
-/* ─── Play button ────────────────────────────────── */
 .btn-play {
   background: var(--red);
   color: #fff;
