@@ -50,11 +50,23 @@
       "url": "https://embed.ksdjugfsddeports.com/embed/skysportsmexico.html",
       "logo": "https://logodownload.org/wp-content/uploads/2020/06/sky-sports-logo-1-1.png"
     },
-        {
-      "id": "meridiano",
-      "name": "MERIDIANO",
-      "url": "https://www.dailymotion.com/video/x9sxu9y",
-      "logo": ""
+    {
+      "id": "disney",
+      "name": "DISNEY",
+      "url": "https://embed.ksdjugfsddeports.com/embed/disneychannel.html",
+      "logo": "https://upload.wikimedia.org/wikipedia/commons/thumb/6/6c/2014_Disney_Channel_logo.svg/3840px-2014_Disney_Channel_logo.svg.png"
+    },
+    {
+      "id": "tntseries",
+      "name": "TNT SERIES",
+      "url": "https://embed.ksdjugfsddeports.com/embed/tntseries.html",
+      "logo": "https://upload.wikimedia.org/wikipedia/commons/8/86/TNT_Series.png"
+    },
+    {
+      "id": "tntseries",
+      "name": "TNT SERIES",
+      "url": "https://embed.ksdjugfsddeports.com/embed/caracol.html",
+      "logo": "https://upload.wikimedia.org/wikipedia/commons/6/65/Logotipo_de_Caracol_Televisi%C3%B3n_Corporativo.png"
     },
     {
       "id": "liga1max",
