@@ -1,58 +1,9 @@
 [
     {
-        "id": "chelsea-vs-manchester-united-----eng--english-premier-league-20-00",
+        "id": "atletico-madrid-vs-real-sociedad-----ch-1--spanish-copa-del-rey-20-00",
         "category": "FUTBOL",
-        "name": "Chelsea vs Manchester United --- ENG\n English Premier League 20:00",
-        "url": "https://a.uliyyrer.shop/hls/NININI.m3u8",
-        "logo": ""
-    },
-    {
-        "id": "chelsea-vs-manchester-united-----eng-hd--english-premier-league-20-00",
-        "category": "FUTBOL",
-        "name": "Chelsea vs Manchester United --- ENG HD\n English Premier League 20:00",
-        "url": "https://ml-pull-hwc.myco.io/EPLBONGO5/hls/EPLBONGO5_H264-720p.m3u8?pkg_media=video&pkg_hm=index.m3u8&pkg_svc=1&pkg_vcodec=avc1",
-        "logo": ""
-    },
-    {
-        "id": "chelsea-vs-manchester-united-----swe--english-premier-league-20-00",
-        "category": "FUTBOL",
-        "name": "Chelsea vs Manchester United --- SWE\n English Premier League 20:00",
+        "name": "Atletico Madrid vs Real Sociedad --- CH 1\n Spanish Copa del Rey 20:00",
         "url": "https://a.uliyyrer.shop/hls/NININIX.m3u8",
-        "logo": ""
-    },
-    {
-        "id": "chelsea-vs-manchester-united-----ch-hd--english-premier-league-20-00",
-        "category": "FUTBOL",
-        "name": "Chelsea vs Manchester United --- CH HD\n English Premier League 20:00",
-        "url": "https://live.kinescopecdn.net/on-air/5bf2c07e-3604-42cf-959a-67ed8914ffd5/c9593ed9-de6e-44fd-bfb4-09eae24ab2c9/master.m3u8",
-        "logo": ""
-    },
-    {
-        "id": "colorado-rapids-vs-inter-miami-----ch-1--mls-league-21-30",
-        "category": "FUTBOL",
-        "name": "Colorado Rapids vs Inter Miami --- CH 1\n MLS League 21:30",
-        "url": "https://s.zekll.shop/hls/FMMMQQQQqQQ.m3u8",
-        "logo": ""
-    },
-    {
-        "id": "forge-vs-cavalry--canada-premier-league-21-00",
-        "category": "FUTBOL",
-        "name": "Forge vs Cavalry\n Canada Premier League 21:00",
-        "url": "https://s.zekll.shop/hls/FMMM.m3u8",
-        "logo": ""
-    },
-    {
-        "id": "lille-vs-nice-----ch-1--ligue-1-france-20-05",
-        "category": "FUTBOL",
-        "name": "Lille vs Nice --- CH 1\n Ligue 1 France 20:05",
-        "url": "http://93.123.109.249/hls/UCCCQQQQQ.m3u8",
-        "logo": ""
-    },
-    {
-        "id": "lille-vs-nice-----ch-2--ligue-1-france-20-05",
-        "category": "FUTBOL",
-        "name": "Lille vs Nice --- CH 2\n Ligue 1 France 20:05",
-        "url": "https://s.zekll.shop/hls/UCCCQQQQQ.m3u8",
         "logo": ""
     },
     {
@@ -63,45 +14,38 @@
         "logo": ""
     },
     {
-        "id": "atletico-madrid-vs-real-sociedad-----ch-1--spanish-copa-del-rey-20-00",
+        "id": "vasco-vs-sao-paulo--brazil-serie-a-22-30",
         "category": "FUTBOL",
-        "name": "Atletico Madrid vs Real Sociedad --- CH 1\n Spanish Copa del Rey 20:00",
-        "url": "https://s.zetiyuiyu.shop/hls/UCCCQQQQ.m3u8",
+        "name": "Vasco vs Sao Paulo\n Brazil Serie A 22:30",
+        "url": "https://s.zekll.shop/hls/ITTTQQQQ.m3u8",
         "logo": ""
     },
     {
-        "id": "berkane-vs-far-rabat-----ch-1--caf-champions-league-20-00",
+        "id": "chapecoense-sc-vs-botafogo-rj--brazil-serie-a-22-30",
         "category": "FUTBOL",
-        "name": "Berkane vs FAR Rabat --- CH 1\n CAF Champions League 20:00",
-        "url": "https://s.zekll.shop/hls/UCCCQQQ.m3u8",
+        "name": "Chapecoense-SC vs Botafogo RJ\n Brazil Serie A 22:30",
+        "url": "https://s.zekll.shop/hls/ITTTQQQ.m3u8",
         "logo": ""
     },
     {
-        "id": "berkane-vs-far-rabat-----ch-2--caf-champions-league-20-00",
+        "id": "colorado-rapids-vs-inter-miami-----ch-1--mls-league-21-30",
         "category": "FUTBOL",
-        "name": "Berkane vs FAR Rabat --- CH 2\n CAF Champions League 20:00",
-        "url": "http://93.123.109.249/hls/UCCCQQQ.m3u8",
+        "name": "Colorado Rapids vs Inter Miami --- CH 1\n MLS League 21:30",
+        "url": "https://s.zekll.shop/hls/FMMMQQQQqQQ.m3u8",
         "logo": ""
     },
     {
-        "id": "as-roma-vs-atalanta--italy-serie-a-19-45",
+        "id": "colorado-rapids-vs-inter-miami-----ch-2--mls-league-21-30",
         "category": "FUTBOL",
-        "name": "AS Roma vs Atalanta\n Italy Serie A 19:45",
-        "url": "https://s.zekll.shop/hls/KRRRQQ.m3u8",
+        "name": "Colorado Rapids vs Inter Miami --- CH 2\n MLS League 21:30",
+        "url": "http://93.123.109.249/hls/FMMMQQQQqQQ.m3u8",
         "logo": ""
     },
     {
-        "id": "sloga-meridian-vs-zrinjski--bosnia-and-herzegovina-premier-league-19-45",
+        "id": "forge-vs-cavalry--canada-premier-league-21-00",
         "category": "FUTBOL",
-        "name": "Sloga Meridian vs Zrinjski\n Bosnia and Herzegovina Premier League 19:45",
-        "url": "https://s.zekll.shop/hls/GIIIIQ.m3u8",
-        "logo": ""
-    },
-    {
-        "id": "hannover-vs-paderborn--german-2-bundesliga-19-30",
-        "category": "FUTBOL",
-        "name": "Hannover vs Paderborn\n German 2 Bundesliga 19:30",
-        "url": "https://s.zekll.shop/hls/ZIIIZQQQ.m3u8",
+        "name": "Forge vs Cavalry\n Canada Premier League 21:00",
+        "url": "https://s.zekll.shop/hls/FMMM.m3u8",
         "logo": ""
     },
     {
