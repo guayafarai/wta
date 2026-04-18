@@ -39,6 +39,18 @@
       "logo": "https://upload.wikimedia.org/wikipedia/commons/b/be/DirecTV_Sports%2B_Latin_America_%282018%29.png"
     },
     {
+      "id": "skysportsbundes",
+      "name": "SKY SPORTS BUNDESLIGA",
+      "url": "https://embed.ksdjugfsddeports.com/embed/skysportsbundesliga.html",
+      "logo": "https://upload.wikimedia.org/wikipedia/de/thumb/c/ca/Sky_Sport_Bundesliga_2020.svg/960px-Sky_Sport_Bundesliga_2020.svg.png?_=20201029143809"
+    },
+    {
+      "id": "skysportsmx",
+      "name": "SKY SPORTS MX",
+      "url": "https://embed.ksdjugfsddeports.com/embed/skysportsmexico.html",
+      "logo": "https://logodownload.org/wp-content/uploads/2020/06/sky-sports-logo-1-1.png"
+    },
+    {
       "id": "liga1max",
       "name": "LIGA 1 MAX",
       "url": "https://embed.ksdjugfsddeports.com/embed/liga1max.html",
