@@ -137,14 +137,16 @@ const ChannelsModule = (() => {
   }
 
   function _buildCard(ch, idx) {
-    const hasUrl = !!ch.url;
-    const card   = document.createElement('div');
+    const hasUrl  = !!ch.url;
+    // Limpiar saltos de línea del nombre (algunos JSON vienen con \n)
+    const name    = (ch.name || '').replace(/\n/g, ' ').trim();
+    const card    = document.createElement('div');
     card.className = 'channel-card';
     card.style.animationDelay = `${Math.min(idx * 0.04, 0.3)}s`;
 
     const catIcon  = ch._cat === 'nba' ? '🏀' : ch._cat === 'mlb' ? '⚾' : ch._cat === 'futbol' ? '⚽' : '📺';
     const logoHTML = ch.logo
-      ? `<img src="${_esc(ch.logo)}" alt="${_esc(ch.name)}" loading="lazy" onerror="this.parentElement.textContent='${catIcon}'">`
+      ? `<img src="${_esc(ch.logo)}" alt="${_esc(name)}" loading="lazy" onerror="this.parentElement.textContent='${catIcon}'">`
       : catIcon;
 
     const views = _getViewCount(ch.id || ch.name);
@@ -155,12 +157,12 @@ const ChannelsModule = (() => {
     card.innerHTML = `
       <div class="channel-logo">${logoHTML}</div>
       <div class="channel-info">
-        <span class="channel-name">${ch.name}</span>
+        <span class="channel-name">${name}</span>
         <div class="channel-meta">${viewsBadge}</div>
       </div>
       <div class="card-actions">
         <button class="${hasUrl ? 'btn-play' : 'btn-play no-url'}"
-                aria-label="Ver ${_esc(ch.name)}">
+                aria-label="Ver ${_esc(name)}">
           ${hasUrl ? '▶ VER' : 'PRONTO'}
         </button>
       </div>
@@ -168,16 +170,16 @@ const ChannelsModule = (() => {
 
     card.querySelector('.btn-play').addEventListener('click', e => {
       e.stopPropagation();
-      _handlePlay(ch);
+      _handlePlay(ch, name);
     });
 
     return card;
   }
 
-  function _handlePlay(ch) {
-    if (!ch.url) { showToast(`${ch.name} — Próximamente`); return; }
+  function _handlePlay(ch, name) {
+    if (!ch.url) { showToast(`${name || ch.name} — Próximamente`); return; }
     _incView(ch.id || ch.name);
-    Router.navigate('/player', { id: ch.id || '', name: ch.name, url: ch.url });
+    Router.navigate('/player', { id: ch.id || '', name: name || ch.name, url: ch.url });
   }
 
   // ── Búsqueda ──────────────────────────────────────
