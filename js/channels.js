@@ -8,6 +8,7 @@ const ChannelsModule = (() => {
   // Todos los canales mezclados por categoría
   const sources = {
     general: [],  // config.json
+    futbol:  [],  // futbol.json
     nba:     [],  // nba.json
     mlb:     [],  // mlb.json
   };
@@ -28,16 +29,18 @@ const ChannelsModule = (() => {
 
   // ── Cargar todos los JSON ─────────────────────────
   async function load() {
-    const [cfg, nba, mlb] = await Promise.all([
+    const [cfg, futbol, nba, mlb] = await Promise.all([
       _fetchJSON('config.json'),
+      _fetchJSON('futbol.json'),
       _fetchJSON('nba.json'),
       _fetchJSON('mlb.json'),
     ]);
 
     configData       = cfg || {};
-    sources.general  = _normalize(cfg?.channels,  'general');
-    sources.nba      = _normalize(nba?.channels,  'nba');
-    sources.mlb      = _normalize(mlb?.channels,  'mlb');
+    sources.general  = _normalize(cfg?.channels,    'general');
+    sources.futbol   = _normalize(futbol?.channels, 'futbol');
+    sources.nba      = _normalize(nba?.channels,    'nba');
+    sources.mlb      = _normalize(mlb?.channels,    'mlb');
 
     return configData;
   }
@@ -81,9 +84,10 @@ const ChannelsModule = (() => {
     container.innerHTML = '';
 
     const tabs = [
-      { id: 'todos', label: '⚽ Todos' },
-      { id: 'nba',   label: '🏀 NBA'  },
-      { id: 'mlb',   label: '⚾ MLB'  },
+      { id: 'todos',   label: '📺 Canales' },
+      { id: 'futbol',  label: '⚽ Fútbol'  },
+      { id: 'nba',     label: '🏀 NBA'     },
+      { id: 'mlb',     label: '⚾ MLB'     },
     ];
 
     tabs.forEach(tab => {
@@ -105,9 +109,10 @@ const ChannelsModule = (() => {
   // ── Filtrar y renderizar ──────────────────────────
   function _filterAndRender() {
     let pool;
-    if      (activeCategory === 'nba') pool = sources.nba;
-    else if (activeCategory === 'mlb') pool = sources.mlb;
-    else pool = [...sources.general, ...sources.nba, ...sources.mlb];
+    if      (activeCategory === 'futbol') pool = sources.futbol;
+    else if (activeCategory === 'nba')    pool = sources.nba;
+    else if (activeCategory === 'mlb')    pool = sources.mlb;
+    else pool = [...sources.general, ...sources.futbol, ...sources.nba, ...sources.mlb];
 
     const filtered = searchTerm
       ? pool.filter(ch => ch.name.toLowerCase().includes(searchTerm))
@@ -137,7 +142,7 @@ const ChannelsModule = (() => {
     card.className = 'channel-card';
     card.style.animationDelay = `${Math.min(idx * 0.04, 0.3)}s`;
 
-    const catIcon  = ch._cat === 'nba' ? '🏀' : ch._cat === 'mlb' ? '⚾' : '⚽';
+    const catIcon  = ch._cat === 'nba' ? '🏀' : ch._cat === 'mlb' ? '⚾' : ch._cat === 'futbol' ? '⚽' : '📺';
     const logoHTML = ch.logo
       ? `<img src="${_esc(ch.logo)}" alt="${_esc(ch.name)}" loading="lazy" onerror="this.parentElement.textContent='${catIcon}'">`
       : catIcon;
@@ -184,7 +189,7 @@ const ChannelsModule = (() => {
   // ── Sugeridos para el sidebar del player ─────────
   // Mezcla canales de la misma categoría + aleatorios
   function getSuggested(excludeId, count = 6) {
-    const all  = [...sources.general, ...sources.nba, ...sources.mlb];
+    const all  = [...sources.general, ...sources.futbol, ...sources.nba, ...sources.mlb];
     const pool = all.filter(ch => (ch.id || ch.name) !== excludeId && ch.url);
     if (!pool.length) return [];
 
@@ -198,7 +203,7 @@ const ChannelsModule = (() => {
   }
 
   function getById(id) {
-    const all = [...sources.general, ...sources.nba, ...sources.mlb];
+    const all = [...sources.general, ...sources.futbol, ...sources.nba, ...sources.mlb];
     return all.find(ch => (ch.id || ch.name) === id) || null;
   }
 
