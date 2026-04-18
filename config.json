@@ -28,10 +28,10 @@
 
     {
       "id": "espn-lat",
-      "name": "ESPN Latinoamérica",
+      "name": "ESPN",
       "category": "Deportes",
       "country": "US",
-      "url": "",
+      "url": "https://embed.ksdjugfsddeports.com/embed/espn.html",
       "is_vip": false,
       "logo": ""
     },
