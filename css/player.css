@@ -36,26 +36,23 @@
 }
 
 /* ─── Ad Shield ──────────────────────────────────── */
-/* Capa transparente sobre el iframe que bloquea clics
-   en las zonas donde los embeds suelen poner banners  */
+/* Las zonas se crean dinámicamente en JS (player.js)
+   Este contenedor solo necesita posicionarse correctamente */
 #ad-shield {
   display: none;
   position: absolute;
-  top: 0; left: 0; right: 0; bottom: 0;
-  z-index: 3;             /* encima del iframe (z:2), debajo del overlay (z:10) */
-  pointer-events: none;   /* solo bloquea eventos si lo activamos */
+  inset: 0;
+  /* z-index 8: encima del iframe(2), debajo de overlay de controles(10) */
+  z-index: 8;
+  pointer-events: none; /* los hijos sí bloquean; el contenedor no */
   background: transparent;
 }
-/* Cuando está activo (primeros 5s) bloqueamos clics en bordes */
-#ad-shield.blocking {
-  pointer-events: all;
-  /* Dejar zona central libre para el video, bloquear bordes */
-  clip-path: polygon(
-    0% 0%, 100% 0%, 100% 12%,   /* franja top */
-    0% 12%, 0% 88%,             /* lado izq */
-    100% 88%, 100% 100%,        /* franja bottom */
-    0% 100%
-  );
+/* Los divs-zona hijos bloquean sus áreas específicas */
+#ad-shield > div {
+  position: absolute;
+  cursor: default;
+  background: transparent;
+  /* Sin color visible — solo bloquea eventos */
 }
 
 .loading-text {
