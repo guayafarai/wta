@@ -91,7 +91,9 @@ function _wireDashboard() {
   const searchInput = document.getElementById('channelSearch');
   const clearBtn    = document.getElementById('clearSearch');
   const notifBtn    = document.getElementById('notifBtn');
+  const catButtons  = document.querySelectorAll('.cat-btn'); // [NUEVO] Botones MLB/NBA
 
+  // Lógica de búsqueda
   searchInput?.addEventListener('input', () => {
     clearBtn?.classList.toggle('visible', searchInput.value.length > 0);
     ChannelsModule.setSearch(searchInput.value);
@@ -101,6 +103,19 @@ function _wireDashboard() {
     searchInput.value = '';
     clearBtn.classList.remove('visible');
     ChannelsModule.setSearch('');
+  });
+
+  // [NUEVO] Lógica de filtrado por categoría
+  catButtons.forEach(btn => {
+    btn.addEventListener('click', () => {
+      // Estilo visual activo
+      catButtons.forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+
+      // Filtrar datos
+      const category = btn.getAttribute('data-cat');
+      ChannelsModule.setCategory(category);
+    });
   });
 
   notifBtn?.addEventListener('click', _requestNotifPermission);
@@ -117,36 +132,7 @@ window.showToast = function(msg, ms = 2800) {
   setTimeout(() => t.remove(), ms);
 };
 
-/* ══════════════════════════════════════════════════
-   NOTIFICACIONES PUSH — Guía completa
-   ══════════════════════════════════════════════════
-   
-   OPCIÓN A — OneSignal (la más fácil, gratis)
-   ─────────────────────────────────────────────────
-   1. Ir a https://onesignal.com → Create App
-   2. Elegir "Web" → poner tu dominio GitHub Pages
-   3. Copiar tu App ID
-   4. Descomentar el script de OneSignal en index.html:
-   
-      <script src="https://cdn.onesignal.com/sdks/OneSignalSDK.js" defer></script>
-      <script>
-        window.OneSignalDeferred = window.OneSignalDeferred || [];
-        OneSignalDeferred.push(async function(OneSignal) {
-          await OneSignal.init({ appId: "TU_APP_ID_AQUI" });
-        });
-      </script>
-   
-   5. Para enviar notificación: vas al panel de OneSignal → New Push → escribes el mensaje → Send
-   
-   OPCIÓN B — Firebase Cloud Messaging (FCM)
-   ─────────────────────────────────────────────────
-   1. https://console.firebase.google.com → nuevo proyecto
-   2. Project Settings → Cloud Messaging → copiar VAPID key
-   3. En sw.js descomentar las líneas de importScripts + firebase.initializeApp
-   4. Llamar subscribeUserToPush() desde aquí
-   
-   ══════════════════════════════════════════════════ */
-
+/* ── Notificaciones ── */
 async function _requestNotifPermission() {
   const badge = document.getElementById('notifBadge');
 
@@ -157,13 +143,6 @@ async function _requestNotifPermission() {
 
   if (Notification.permission === 'granted') {
     showToast('✅ Notificaciones ya activadas');
-    // Mostrar instrucciones para enviar desde OneSignal
-    setTimeout(() => showToast('📲 Envía desde onesignal.com → Dashboard → New Push'), 1500);
-    return;
-  }
-
-  if (Notification.permission === 'denied') {
-    showToast('🚫 Notificaciones bloqueadas — habilítalas en ajustes del navegador');
     return;
   }
 
@@ -180,14 +159,6 @@ async function _requestNotifPermission() {
 async function _subscribeToNotifications() {
   try {
     const reg = await navigator.serviceWorker.ready;
-    // ── OneSignal se encarga automáticamente si está configurado ──
-    // ── FCM manual: descomentar cuando tengas VAPID key ──
-    // const VAPID = 'TU_VAPID_KEY_PUBLICA';
-    // const sub = await reg.pushManager.subscribe({
-    //   userVisibleOnly: true,
-    //   applicationServerKey: VAPID
-    // });
-    // await fetch('/api/subscribe', { method: 'POST', body: JSON.stringify(sub) });
     console.log('[Push] Suscripción lista');
   } catch (e) {
     console.warn('[Push]', e);
@@ -198,7 +169,6 @@ async function _subscribeToNotifications() {
 async function _registerSW() {
   if (!('serviceWorker' in navigator)) return;
   try {
-    // Ruta relativa — funciona en GitHub Pages subdirectorios (/wta/, /repo/, etc.)
     const swUrl = new URL('sw.js', document.baseURI).href;
     const scope  = new URL('./', document.baseURI).pathname;
     const reg    = await navigator.serviceWorker.register(swUrl, { scope });
@@ -215,7 +185,6 @@ async function _registerSW() {
       document.getElementById('notifBadge')?.classList.add('visible');
     }
   } catch (err) {
-    // No crashear la app si el SW falla (ej: file:// en dev local)
     console.warn('[SW] No registrado:', err.message);
   }
 }
@@ -230,6 +199,6 @@ document.addEventListener('DOMContentLoaded', async () => {
     if (ft) ft.textContent = config.footer_text || '';
   }
 
-  _wireDashboard();
+  _wireDashboard(); // Configura búsqueda y categorías
   Router.init();
 });
