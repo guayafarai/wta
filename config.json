@@ -3,33 +3,27 @@
   "footer_text": "PlayCast PRO • Deportes en vivo • 2026",
   "channels": [
     {
-      "id": "espn-deportes",
-      "name": "ESPN Deportes",
-      "url": "",
+      "id": "espn1",
+      "name": "ESPN",
+      "url": "https://embed.ksdjugfsddeports.com/embed/espn.html",
       "logo": ""
     },
     {
-      "id": "fox-sports",
-      "name": "Fox Sports",
-      "url": "",
+      "id": "espn2",
+      "name": "ESPN 2",
+      "url": "https://embed.ksdjugfsddeports.com/embed/espn2.html",
       "logo": ""
     },
     {
-      "id": "directv-sports",
-      "name": "DirecTV Sports",
-      "url": "",
+      "id": "espn3",
+      "name": "ESPN 3",
+      "url": "https://embed.ksdjugfsddeports.com/embed/espn3.html",
       "logo": ""
     },
     {
-      "id": "tnt-sports",
-      "name": "TNT Sports",
-      "url": "",
-      "logo": ""
-    },
-    {
-      "id": "win-sports",
-      "name": "Win Sports",
-      "url": "",
+      "id": "liga1max",
+      "name": "LIGA 1 MAX",
+      "url": "https://embed.ksdjugfsddeports.com/embed/liga1max.html",
       "logo": ""
     }
   ]
