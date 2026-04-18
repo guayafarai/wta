@@ -1,157 +1,186 @@
-const Player = (() => {
-    let lastUrl = '';
-    let lastName = '';
-    let lastId = '';
-    let hls = null;
-    let dash = null;
+/* ═══════════════════════════════════════════════════
+   PlayCast PRO — Player Module
+   Soporta: HLS (.m3u8), DASH (.mpd), iframe, MP4
+   CORREGIDO: Salto de CORS y Error de Exportación
+   ═══════════════════════════════════════════════════ */
 
-    /**
-     * Limpia el contenedor del reproductor y destruye instancias previas
-     * para evitar fugas de memoria o superposición de audio.
-     */
-    const _reset = () => {
-        if (hls) {
-            hls.destroy();
-            hls = null;
-        }
-        if (dash) {
-            dash.reset();
-            dash = null;
-        }
-        
-        const container = document.getElementById('player-container');
-        if (container) {
-            // Reestablecemos el HTML base con una etiqueta de video limpia
-            container.innerHTML = '<video id="main-video" controls playsinline></video>';
-        }
-    };
+const PlayerModule = (() => {
+  let videoEl, iframeEl, overlayEl, errorEl, loadingEl;
+  let channelNameEl, sidebarNameEl, backBtn, fullscreenBtn;
 
-    /**
-     * Función principal para reproducir un canal.
-     * @param {string} url - URL del stream o iframe.
-     * @param {string} name - Nombre del canal para mostrar en la UI.
-     * @param {string} id - ID único del canal.
-     */
-    const play = (url, name, id) => {
-        if (!url) return;
-        
-        lastUrl = url;
-        lastName = name || lastName;
-        lastId = id || lastId;
+  let hlsInstance  = null;
+  let dashInstance = null;
+  let lastUrl      = '';
+  let lastName     = '';
+  let lastId       = '';
+  let overlayTimer = null;
+  let mounted      = false;
 
-        // Actualizar nombres en la interfaz
-        const channelNameEl = document.getElementById('current-channel-name');
-        const sidebarNameEl = document.getElementById('sidebar-channel-name');
-        if (channelNameEl) channelNameEl.textContent = lastName;
-        if (sidebarNameEl) sidebarNameEl.textContent = lastName;
+  function mount() {
+    if (mounted) return;
+    mounted = true;
 
-        // --- SOLUCIÓN PARA ERROR DE CORS ---
-        // Si es un archivo .m3u8 o .mpd, usamos el proxy AllOrigins para saltar el bloqueo
-        const isStreamFile = url.toLowerCase().includes('.m3u8') || url.toLowerCase().includes('.mpd');
-        let finalUrl = url;
+    videoEl       = document.getElementById('video-player');
+    iframeEl      = document.getElementById('iframe-player');
+    overlayEl     = document.getElementById('player-overlay');
+    errorEl       = document.getElementById('stream-error');
+    loadingEl     = document.getElementById('stream-loading');
+    channelNameEl = document.getElementById('player-channel-name');
+    sidebarNameEl = document.getElementById('sidebar-channel-name');
+    backBtn       = document.getElementById('btn-back-player');
+    fullscreenBtn = document.getElementById('btn-fullscreen');
 
-        if (isStreamFile && !url.includes('api.allorigins.win')) {
-            finalUrl = `https://api.allorigins.win/raw?url=${encodeURIComponent(url)}`;
-        }
-        // ------------------------------------
+    backBtn?.addEventListener('click', () => { stop(); Router.navigate('/'); });
+    fullscreenBtn?.addEventListener('click', toggleFullscreen);
+    document.getElementById('btn-retry-stream')?.addEventListener('click', () => play(lastUrl, lastName, lastId));
+    document.getElementById('video-wrapper')?.addEventListener('click', toggleOverlay);
+    document.addEventListener('keydown', e => {
+      if (e.key === 'Escape') { stop(); Router.navigate('/'); }
+    });
+  }
 
-        _reset();
+  function play(url, name, id) {
+    if (!url) { _showError('URL no disponible', 'Agrega la URL del canal en su archivo .json'); return; }
 
-        // Determinar el método de reproducción según la extensión o dominio
-        if (finalUrl.includes('.m3u8')) {
-            _playHLS(finalUrl);
-        } else if (finalUrl.includes('.mpd')) {
-            _playDASH(finalUrl);
-        } else if (finalUrl.includes('youtube.com') || finalUrl.includes('youtu.be')) {
-            _playYoutube(finalUrl);
-        } else {
-            // Si no es un archivo directo, se carga como Iframe (ej. Twitch, reproductores externos)
-            _playIframe(finalUrl);
-        }
-    };
+    lastUrl  = url;
+    lastName = name || 'En vivo';
+    lastId   = id   || '';
 
-    /**
-     * Reproducción de HLS (.m3u8) usando hls.js
-     */
-    const _playHLS = (url) => {
-        const video = document.getElementById('main-video');
-        
-        if (Hls.isSupported()) {
-            hls = new Hls({
-                xhrSetup: xhr => {
-                    // Evita problemas de autenticación cruzada con el proxy
-                    xhr.withCredentials = false;
-                }
-            });
-            hls.loadSource(url);
-            hls.attachMedia(video);
-            hls.on(Hls.Events.MANIFEST_PARSED, () => {
-                video.play().catch(e => console.log("Autoplay bloqueado:", e));
-            });
-            
-            // Manejo básico de errores de red
-            hls.on(Hls.Events.ERROR, (event, data) => {
-                if (data.fatal) {
-                    console.error("Error fatal en HLS:", data.type);
-                }
-            });
-        } 
-        // Soporte nativo para Safari/iOS
-        else if (video.canPlayType('application/vnd.apple.mpegurl')) {
-            video.src = url;
-            video.addEventListener('loadedmetadata', () => {
-                video.play().catch(e => console.log("Autoplay bloqueado:", e));
-            });
-        }
-    };
+    if (channelNameEl) channelNameEl.textContent = lastName;
+    if (sidebarNameEl) sidebarNameEl.textContent = lastName;
 
-    /**
-     * Reproducción de DASH (.mpd) usando dash.js
-     */
-    const _playDASH = (url) => {
-        const video = document.getElementById('main-video');
-        dash = dashjs.MediaPlayer().create();
-        dash.initialize(video, url, true);
-    };
+    _reset();
+    _showLoading(true);
+    _showError(false);
 
-    /**
-     * Formatea links de YouTube para que funcionen en el reproductor
-     */
-    const _playYoutube = (url) => {
-        let videoId = '';
-        if (url.includes('v=')) {
-            videoId = url.split('v=')[1].split('&')[0];
-        } else {
-            videoId = url.split('/').pop();
-        }
-        _playIframe(`https://www.youtube.com/embed/${videoId}?autoplay=1`);
-    };
+    // --- SOLUCIÓN CORS ---
+    const isStream = /\.m3u8($|\?)/i.test(url) || /\.mpd($|\?)/i.test(url);
+    let finalUrl = url;
+    
+    // Si es un stream directo, usamos el proxy para evitar el bloqueo
+    if (isStream && !url.includes('api.allorigins.win')) {
+      finalUrl = `https://api.allorigins.win/raw?url=${encodeURIComponent(url)}`;
+    }
+    // ---------------------
 
-    /**
-     * Carga de contenido externo mediante iframes
-     */
-    const _playIframe = (url) => {
-        const container = document.getElementById('player-container');
-        if (container) {
-            container.innerHTML = `
-                <iframe 
-                    src="${url}" 
-                    frameborder="0" 
-                    allowfullscreen 
-                    allow="autoplay; encrypted-media"
-                    style="width:100%; height:100%; background:#000;">
-                </iframe>`;
-        }
-    };
+    const isIframe = /youtube\.com|youtu\.be|facebook\.com|twitch\.tv|dailymotion\.com|\/embed\//i.test(finalUrl)
+                  || /\.html?($|\?)/i.test(finalUrl);
+    const isDash   = /\.mpd($|\?)/i.test(finalUrl);
+    const isHLS    = /\.m3u8($|\?)/i.test(finalUrl);
 
-    /**
-     * Recarga el canal actual (útil para errores de conexión)
-     */
-    const refresh = () => {
-        if (lastUrl) play(lastUrl, lastName, lastId);
-    };
+    if (isIframe) _playIframe(finalUrl);
+    else if (isDash)   _playDash(finalUrl);
+    else if (isHLS)    _playHLS(finalUrl);
+    else               _playDirect(finalUrl);
 
-    return { play, refresh };
+    showOverlay();
+  }
+
+  function stop() {
+    _reset();
+    _exitFullscreen();
+    _unlockOrientation();
+  }
+
+  function _reset() {
+    hlsInstance?.destroy();  hlsInstance  = null;
+    dashInstance?.reset();   dashInstance = null;
+
+    if (videoEl) {
+      videoEl.pause();
+      videoEl.removeAttribute('src');
+      videoEl.load();
+      videoEl.style.display = 'none';
+    }
+    if (iframeEl) {
+      iframeEl.src           = '';
+      iframeEl.style.display = 'none';
+    }
+    clearOverlayTimer();
+  }
+
+  function _playHLS(url) {
+    videoEl.style.display = 'block';
+    if (typeof Hls !== 'undefined' && Hls.isSupported()) {
+      hlsInstance = new Hls({
+        xhrSetup: xhr => { xhr.withCredentials = false; }
+      });
+      hlsInstance.loadSource(url);
+      hlsInstance.attachMedia(videoEl);
+      hlsInstance.on(Hls.Events.MANIFEST_PARSED, () => {
+        _showLoading(false);
+        videoEl.play().catch(() => {});
+      });
+      hlsInstance.on(Hls.Events.ERROR, (_, data) => {
+        if (!data.fatal) return;
+        _showError('Sin señal', 'Error de red o CORS persistente');
+      });
+    } else if (videoEl.canPlayType('application/vnd.apple.mpegurl')) {
+      videoEl.src = url;
+      videoEl.addEventListener('loadedmetadata', () => {
+        _showLoading(false);
+        videoEl.play().catch(() => {});
+      }, { once: true });
+    }
+  }
+
+  function _playDash(url) {
+    videoEl.style.display = 'block';
+    dashInstance = dashjs.MediaPlayer().create();
+    dashInstance.initialize(videoEl, url, true);
+    dashInstance.on(dashjs.MediaPlayer.events.STREAM_INITIALIZED, () => _showLoading(false));
+  }
+
+  function _playIframe(url) {
+    iframeEl.style.display = 'block';
+    iframeEl.src = url;
+    setTimeout(() => _showLoading(false), 3000);
+  }
+
+  function _playDirect(url) {
+    videoEl.style.display = 'block';
+    videoEl.src = url;
+    videoEl.play().then(() => _showLoading(false)).catch(() => {});
+  }
+
+  function _showError(title, msg) {
+    _showLoading(false);
+    if (!errorEl) return;
+    if (title === false) { errorEl.classList.remove('visible'); return; }
+    document.getElementById('error-title').textContent = title;
+    document.getElementById('error-msg').textContent = msg;
+    errorEl.classList.add('visible');
+  }
+
+  function _showLoading(v) { loadingEl?.classList.toggle('visible', v); }
+
+  function showOverlay() {
+    overlayEl?.classList.add('visible');
+    clearOverlayTimer();
+    overlayTimer = setTimeout(() => overlayEl?.classList.remove('visible'), 4000);
+  }
+
+  function toggleOverlay() {
+    overlayEl?.classList.contains('visible') ? overlayEl.classList.remove('visible') : showOverlay();
+  }
+
+  function clearOverlayTimer() { if (overlayTimer) { clearTimeout(overlayTimer); overlayTimer = null; } }
+
+  async function toggleFullscreen() {
+    const w = document.getElementById('video-wrapper');
+    if (!document.fullscreenElement) {
+      await (w.requestFullscreen || w.webkitRequestFullscreen).call(w);
+    } else {
+      document.exitFullscreen();
+    }
+  }
+
+  function _exitFullscreen() { if (document.fullscreenElement) document.exitFullscreen(); }
+  function _lockLandscape() {}
+  function _unlockOrientation() {}
+
+  return { mount, play, stop, showOverlay };
 })();
 
-export default Player;
+// CORRECCIÓN: Usar window para que sea accesible globalmente
+window.PlayerModule = PlayerModule;
