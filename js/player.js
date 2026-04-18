@@ -105,7 +105,7 @@ const PlayerModule = (() => {
     dashInstance?.reset();   dashInstance = null;
 
     // Limpiar bloqueadores de ads del iframe anterior
-    _removeAdBlockers();
+   // _removeAdBlockers();
 
     if (videoEl) {
       videoEl.pause();
@@ -175,13 +175,13 @@ const PlayerModule = (() => {
     iframeEl.src = url;
 
     // 1) Activar escudo permanente en bordes
-    _activateAdShield();
+   // _activateAdShield();
 
     // 2) Interceptar popups ANTES de que el iframe cargue
-    _installPopupBlocker();
+   // _installPopupBlocker();
 
     // 3) Detectar cuando el iframe roba foco (popup intento)
-    _installBlurGuard();
+   // _installBlurGuard();
 
     const t = setTimeout(() => _showLoading(false), 3500);
     iframeEl.onload = () => { clearTimeout(t); _showLoading(false); };
