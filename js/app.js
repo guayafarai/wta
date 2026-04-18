@@ -1,28 +1,19 @@
 /* ═══════════════════════════════════════════════════
    PlayCast PRO — App Bootstrap
-   
-   Wires together: Router, ChannelsModule, PlayerModule
-   Service Worker registration & push permission flow.
    ═══════════════════════════════════════════════════ */
 
-/* ── Prevent pull-to-refresh (WebView) ──────────── */
-let touchStartY = 0;
-document.addEventListener('touchstart', e => {
-  touchStartY = e.touches[0].clientY;
-}, { passive: true });
-
+/* ── Anti pull-to-refresh (WebView) ─────────────── */
+let _touchY = 0;
+document.addEventListener('touchstart', e => { _touchY = e.touches[0].clientY; }, { passive: true });
 document.addEventListener('touchmove', e => {
-  const dy = e.touches[0].clientY - touchStartY;
-  // Block native pull-to-refresh when user pulls down at top of page
-  if (dy > 0 && window.scrollY === 0 && e.cancelable) {
+  if (e.touches[0].clientY - _touchY > 0 && window.scrollY === 0 && e.cancelable)
     e.preventDefault();
-  }
 }, { passive: false });
 
-/* ── Page registry ───────────────────────────────── */
+/* ── Pages ───────────────────────────────────────── */
 const Pages = {
   dashboard: document.getElementById('page-dashboard'),
-  player:    document.getElementById('page-player')
+  player:    document.getElementById('page-player'),
 };
 
 function showPage(id) {
@@ -39,14 +30,11 @@ function showPage(id) {
   });
 }
 
-/* ── Router setup ────────────────────────────────── */
+/* ── Router ──────────────────────────────────────── */
 Router.register('/', {
-  title: 'PlayCast PRO',
-  onEnter() {
-    showPage('dashboard');
-    ChannelsModule.mount();
-  },
-  onLeave() {}
+  title: 'PlayCast PRO — Deportes en vivo',
+  onEnter() { showPage('dashboard'); ChannelsModule.mount(); },
+  onLeave()  {}
 });
 
 Router.register('/player', {
@@ -55,78 +43,54 @@ Router.register('/player', {
     showPage('player');
     PlayerModule.mount();
 
-    // Params can come from URL or from in-app navigation
-    const url  = params.url  || decodeURIComponent(params.url  || '');
-    const name = params.name || decodeURIComponent(params.name || '');
+    const url  = params.url  || '';
+    const name = params.name || '';
+    const id   = params.id   || '';
 
     if (url) {
-      PlayerModule.play(url, name);
-    } else if (params.id) {
-      const ch = ChannelsModule.getById(params.id);
-      if (ch) PlayerModule.play(ch.url, ch.name);
+      PlayerModule.play(url, name, id);
+    } else if (id) {
+      const ch = ChannelsModule.getById(id);
+      if (ch) PlayerModule.play(ch.url, ch.name, ch.id);
     }
 
-    // Render related channels in sidebar
-    renderRelated(params.id, params.name);
+    _renderSuggested(id || name);
   },
-  onLeave() {
-    PlayerModule.stop();
-  }
+  onLeave() { PlayerModule.stop(); }
 });
 
-/* ── Related channels in player sidebar ─────────── */
-function renderRelated(currentId, currentName) {
-  const relatedList = document.getElementById('related-list');
-  const relatedTitle = document.getElementById('related-title');
-  if (!relatedList) return;
+/* ── Sugeridos aleatorios / más vistos ───────────── */
+function _renderSuggested(excludeId) {
+  const list = document.getElementById('related-list');
+  if (!list) return;
 
-  const ch = ChannelsModule.getById(currentId);
-  const category = ch?.category;
+  const suggested = ChannelsModule.getSuggested(excludeId, 6);
+  list.innerHTML = '';
 
-  let related = category
-    ? ChannelsModule.getByCategory(category).filter(c => (c.id || c.url) !== currentId)
-    : ChannelsModule.all.filter(c => (c.id || c.url) !== currentId).slice(0, 5);
-
-  related = related.slice(0, 6);
-
-  const infoPanel = document.querySelector('.player-info-panel');
-  if (infoPanel) {
-    const h2 = infoPanel.querySelector('h2');
-    const badge = infoPanel.querySelector('.player-cat-badge');
-    if (h2) h2.textContent = currentName || 'En vivo';
-    if (badge && category) badge.textContent = category;
-  }
-
-  if (relatedTitle) relatedTitle.style.display = related.length ? 'block' : 'none';
-
-  relatedList.innerHTML = '';
-  related.forEach(c => {
-    if (!c.url) return;
-    const emoji = ChannelsModule.getCategoryEmoji(c.category);
-    const logoHTML = c.logo
-      ? `<img src="${c.logo}" alt="${c.name}" loading="lazy" onerror="this.textContent='${emoji}'">`
-      : emoji;
+  suggested.forEach(ch => {
+    const logoHTML = ch.logo
+      ? `<img src="${ch.logo}" alt="${ch.name}" loading="lazy" onerror="this.parentElement.textContent='⚽'">`
+      : '⚽';
 
     const card = document.createElement('div');
     card.className = 'related-card';
     card.innerHTML = `
       <div class="related-logo">${logoHTML}</div>
-      <span class="related-name">${c.name}</span>
+      <span class="related-name">${ch.name}</span>
       <button class="btn-related-play">▶</button>
     `;
     card.querySelector('.btn-related-play').addEventListener('click', () => {
-      Router.navigate('/player', { id: c.id || '', name: c.name, url: c.url });
+      Router.navigate('/player', { id: ch.id || '', name: ch.name, url: ch.url });
     });
-    relatedList.appendChild(card);
+    list.appendChild(card);
   });
 }
 
-/* ── Dashboard UI wiring ─────────────────────────── */
-function wireDashboardUI() {
-  const searchInput  = document.getElementById('channelSearch');
-  const clearBtn     = document.getElementById('clearSearch');
-  const viewToggleBtn = document.getElementById('viewToggleBtn');
-  const notifBtn     = document.getElementById('notifBtn');
+/* ── Dashboard wiring ────────────────────────────── */
+function _wireDashboard() {
+  const searchInput = document.getElementById('channelSearch');
+  const clearBtn    = document.getElementById('clearSearch');
+  const notifBtn    = document.getElementById('notifBtn');
 
   searchInput?.addEventListener('input', () => {
     clearBtn?.classList.toggle('visible', searchInput.value.length > 0);
@@ -139,139 +103,133 @@ function wireDashboardUI() {
     ChannelsModule.setSearch('');
   });
 
-  viewToggleBtn?.addEventListener('click', () => {
-    const newView = ChannelsModule.toggleView();
-    viewToggleBtn.textContent = newView === 'grid' ? '☰' : '⊞';
-    viewToggleBtn.title = newView === 'grid' ? 'Vista lista' : 'Vista cuadrícula';
-  });
-
-  notifBtn?.addEventListener('click', requestPushPermission);
+  notifBtn?.addEventListener('click', _requestNotifPermission);
 }
 
-/* ── Toast system ────────────────────────────────── */
-window.showToast = function(message, duration = 2800) {
-  const container = document.getElementById('toast-container');
-  if (!container) return;
-
-  const toast = document.createElement('div');
-  toast.className = 'toast';
-  toast.textContent = message;
-  container.appendChild(toast);
-
-  setTimeout(() => toast.remove(), duration);
+/* ── Toast ───────────────────────────────────────── */
+window.showToast = function(msg, ms = 2800) {
+  const c = document.getElementById('toast-container');
+  if (!c) return;
+  const t = document.createElement('div');
+  t.className = 'toast';
+  t.textContent = msg;
+  c.appendChild(t);
+  setTimeout(() => t.remove(), ms);
 };
 
-/* ── Push Notifications (FCM ready) ─────────────── */
-async function requestPushPermission() {
+/* ══════════════════════════════════════════════════
+   NOTIFICACIONES PUSH — Guía completa
+   ══════════════════════════════════════════════════
+   
+   OPCIÓN A — OneSignal (la más fácil, gratis)
+   ─────────────────────────────────────────────────
+   1. Ir a https://onesignal.com → Create App
+   2. Elegir "Web" → poner tu dominio GitHub Pages
+   3. Copiar tu App ID
+   4. Descomentar el script de OneSignal en index.html:
+   
+      <script src="https://cdn.onesignal.com/sdks/OneSignalSDK.js" defer></script>
+      <script>
+        window.OneSignalDeferred = window.OneSignalDeferred || [];
+        OneSignalDeferred.push(async function(OneSignal) {
+          await OneSignal.init({ appId: "TU_APP_ID_AQUI" });
+        });
+      </script>
+   
+   5. Para enviar notificación: vas al panel de OneSignal → New Push → escribes el mensaje → Send
+   
+   OPCIÓN B — Firebase Cloud Messaging (FCM)
+   ─────────────────────────────────────────────────
+   1. https://console.firebase.google.com → nuevo proyecto
+   2. Project Settings → Cloud Messaging → copiar VAPID key
+   3. En sw.js descomentar las líneas de importScripts + firebase.initializeApp
+   4. Llamar subscribeUserToPush() desde aquí
+   
+   ══════════════════════════════════════════════════ */
+
+async function _requestNotifPermission() {
+  const badge = document.getElementById('notifBadge');
+
   if (!('Notification' in window)) {
-    showToast('Las notificaciones no están disponibles');
+    showToast('Las notificaciones no están disponibles en este browser');
     return;
   }
 
-  const badge = document.getElementById('notifBadge');
-
   if (Notification.permission === 'granted') {
     showToast('✅ Notificaciones ya activadas');
+    // Mostrar instrucciones para enviar desde OneSignal
+    setTimeout(() => showToast('📲 Envía desde onesignal.com → Dashboard → New Push'), 1500);
+    return;
+  }
+
+  if (Notification.permission === 'denied') {
+    showToast('🚫 Notificaciones bloqueadas — habilítalas en ajustes del navegador');
     return;
   }
 
   const perm = await Notification.requestPermission();
   if (perm === 'granted') {
-    showToast('🔔 Notificaciones activadas');
+    showToast('🔔 ¡Notificaciones activadas!');
     if (badge) badge.classList.remove('visible');
-    // TODO: Subscribe to FCM push here using VAPID key from sw.js
-    // const reg = await navigator.serviceWorker.ready;
-    // const sub = await reg.pushManager.subscribe({ userVisibleOnly: true, applicationServerKey: VAPID_KEY });
-    // await sendSubscriptionToServer(sub);
+    _subscribeToNotifications();
   } else {
-    showToast('Notificaciones bloqueadas');
+    showToast('Permiso denegado');
   }
 }
 
-/* ── Service Worker registration ─────────────────── */
-async function registerSW() {
-  if (!('serviceWorker' in navigator)) return;
-
+async function _subscribeToNotifications() {
   try {
-    // Detect base path automatically (works in root AND GitHub Pages subdirs like /wta/)
-    // e.g. guayafarai.github.io/wta/ → scope = /wta/
-    const swPath = new URL('sw.js', document.baseURI).href;
-    const scope  = new URL('./', document.baseURI).pathname;
-    const reg = await navigator.serviceWorker.register(swPath, { scope });
-    console.log('[SW] Registered:', reg.scope);
+    const reg = await navigator.serviceWorker.ready;
+    // ── OneSignal se encarga automáticamente si está configurado ──
+    // ── FCM manual: descomentar cuando tengas VAPID key ──
+    // const VAPID = 'TU_VAPID_KEY_PUBLICA';
+    // const sub = await reg.pushManager.subscribe({
+    //   userVisibleOnly: true,
+    //   applicationServerKey: VAPID
+    // });
+    // await fetch('/api/subscribe', { method: 'POST', body: JSON.stringify(sub) });
+    console.log('[Push] Suscripción lista');
+  } catch (e) {
+    console.warn('[Push]', e);
+  }
+}
 
-    // Handle messages from SW (e.g. NAVIGATE command)
-    navigator.serviceWorker.addEventListener('message', event => {
-      if (event.data?.type === 'NAVIGATE') {
-        const url = new URL(event.data.url, location.origin);
-        const path = url.pathname;
-        const params = Object.fromEntries(url.searchParams.entries());
-        Router.navigate(path, params);
+/* ── Service Worker ──────────────────────────────── */
+async function _registerSW() {
+  if (!('serviceWorker' in navigator)) return;
+  try {
+    // Ruta relativa — funciona en GitHub Pages subdirectorios (/wta/, /repo/, etc.)
+    const swUrl = new URL('sw.js', document.baseURI).href;
+    const scope  = new URL('./', document.baseURI).pathname;
+    const reg    = await navigator.serviceWorker.register(swUrl, { scope });
+    console.log('[SW] Registrado:', reg.scope);
+
+    navigator.serviceWorker.addEventListener('message', ev => {
+      if (ev.data?.type === 'NAVIGATE') {
+        const u = new URL(ev.data.url, location.origin);
+        Router.navigate(u.pathname, Object.fromEntries(u.searchParams));
       }
     });
 
-    // Show notification bell if permission not yet granted
     if (Notification.permission === 'default') {
-      const badge = document.getElementById('notifBadge');
-      if (badge) badge.classList.add('visible');
+      document.getElementById('notifBadge')?.classList.add('visible');
     }
   } catch (err) {
-    console.warn('[SW] Registration failed:', err);
+    // No crashear la app si el SW falla (ej: file:// en dev local)
+    console.warn('[SW] No registrado:', err.message);
   }
 }
 
-/* ── Prevent accidental app close on Android ─────── */
-// The Router handles popstate, but we add an extra guard:
-// if user is on home and presses back, show a "exit?" prompt
-window.addEventListener('popstate', event => {
-  // If no state and we're at root, router already handled it
-  // This is a safety net for Android WebView clients that
-  // send a synthetic 'back' event before popstate fires
-});
-
-/* ── WebView bridge (optional native integration) ── */
-// Android: window.PlayCastBridge?.onChannelStarted(channelId)
-// iOS:     window.webkit.messageHandlers.PlayCast.postMessage({...})
-window.PlayCastWebBridge = {
-  notifyChannelStarted(id, name) {
-    try {
-      // Android
-      if (window.PlayCastBridge?.onChannelStarted) {
-        window.PlayCastBridge.onChannelStarted(id, name);
-      }
-      // iOS
-      if (window.webkit?.messageHandlers?.PlayCast) {
-        window.webkit.messageHandlers.PlayCast.postMessage({ event: 'channelStarted', id, name });
-      }
-    } catch (e) {}
-  },
-  notifyChannelStopped() {
-    try {
-      if (window.PlayCastBridge?.onChannelStopped) window.PlayCastBridge.onChannelStopped();
-      if (window.webkit?.messageHandlers?.PlayCast) {
-        window.webkit.messageHandlers.PlayCast.postMessage({ event: 'channelStopped' });
-      }
-    } catch (e) {}
-  }
-};
-
 /* ── Bootstrap ───────────────────────────────────── */
 document.addEventListener('DOMContentLoaded', async () => {
-  // 1. Register service worker
-  registerSW();
+  _registerSW();
 
-  // 2. Load config / channels data
   const config = await ChannelsModule.load();
-
-  // 3. Set app name / footer
   if (config) {
-    const footer = document.getElementById('footerText');
-    if (footer) footer.textContent = config.footer_text || '';
+    const ft = document.getElementById('footerText');
+    if (ft) ft.textContent = config.footer_text || '';
   }
 
-  // 4. Wire static UI events (search, view toggle, etc.)
-  wireDashboardUI();
-
-  // 5. Initialize Router (parses URL, activates first route)
+  _wireDashboard();
   Router.init();
 });

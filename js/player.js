@@ -1,22 +1,38 @@
 /* ═══════════════════════════════════════════════════
    PlayCast PRO — Player Module
-   
-   Handles: HLS, DASH, iframe, error handling,
-   fullscreen, landscape lock, overlay controls.
+   HLS / DASH / iframe con:
+   - Proxy en cascada anti-CORS
+   - Capa bloqueadora de anuncios sobre iframe
+   - Mensajes de error claros (sin texto de GitHub)
    ═══════════════════════════════════════════════════ */
 
 const PlayerModule = (() => {
-  // ── DOM refs ──────────────────────────────────────
-  let videoEl, iframeEl, overlayEl, errorEl, loadingEl;
-  let channelNameEl, backBtn, fullscreenBtn;
+  let videoEl, iframeEl, adShield, overlayEl, errorEl, loadingEl;
+  let channelNameEl, sidebarNameEl, backBtn, fullscreenBtn;
 
-  // ── State ─────────────────────────────────────────
-  let hlsInstance    = null;
-  let dashInstance   = null;
-  let lastUrl        = '';
-  let lastName       = '';
-  let overlayTimer   = null;
-  let mounted        = false;
+  let hlsInstance  = null;
+  let dashInstance = null;
+  let lastUrl      = '';
+  let lastName     = '';
+  let lastId       = '';
+  let overlayTimer = null;
+  let mounted      = false;
+  let proxyIndex   = 0;
+
+  // ── CORS Proxy chain ─────────────────────────────
+  // Si el stream HLS falla por CORS, se prueban en orden.
+  const CORS_PROXIES = [
+    null,   // 0: directo
+    url => `https://corsproxy.io/?${encodeURIComponent(url)}`,
+    url => `https://proxy.cors.sh/${url}`,
+    url => `https://thingproxy.freeboard.io/fetch/${url}`,
+  ];
+
+  function _proxied(url) {
+    if (proxyIndex === 0) return url;
+    const fn = CORS_PROXIES[proxyIndex];
+    return fn ? fn(url) : url;
+  }
 
   // ── Mount ─────────────────────────────────────────
   function mount() {
@@ -25,85 +41,68 @@ const PlayerModule = (() => {
 
     videoEl       = document.getElementById('video-player');
     iframeEl      = document.getElementById('iframe-player');
+    adShield      = document.getElementById('ad-shield');
     overlayEl     = document.getElementById('player-overlay');
     errorEl       = document.getElementById('stream-error');
     loadingEl     = document.getElementById('stream-loading');
     channelNameEl = document.getElementById('player-channel-name');
+    sidebarNameEl = document.getElementById('sidebar-channel-name');
     backBtn       = document.getElementById('btn-back-player');
     fullscreenBtn = document.getElementById('btn-fullscreen');
 
-    // Back button → Router
-    backBtn?.addEventListener('click', () => {
-      stop();
-      Router.navigate('/');
-    });
-
-    // Fullscreen toggle
+    backBtn?.addEventListener('click', () => { stop(); Router.navigate('/'); });
     fullscreenBtn?.addEventListener('click', toggleFullscreen);
-
-    // Retry button
-    document.getElementById('btn-retry-stream')?.addEventListener('click', () => {
-      play(lastUrl, lastName);
-    });
-
-    // Tap video area = toggle overlay
+    document.getElementById('btn-retry-stream')?.addEventListener('click', () => play(lastUrl, lastName));
     document.getElementById('video-wrapper')?.addEventListener('click', toggleOverlay);
-
-    // Keyboard (desktop debugging)
     document.addEventListener('keydown', e => {
       if (e.key === 'Escape') { stop(); Router.navigate('/'); }
     });
   }
 
-  // ── Play a stream ─────────────────────────────────
-  function play(url, name) {
-    if (!url) { showError('URL no disponible'); return; }
+  // ── Play ──────────────────────────────────────────
+  function play(url, name, id) {
+    if (!url) { _showError('URL no disponible', 'Configura la URL del canal en config.json'); return; }
 
     lastUrl  = url;
     lastName = name || 'En vivo';
-    proxyIndex = 0; // reset proxy en cada nueva reproducción
+    lastId   = id   || '';
+    proxyIndex = 0;
 
     if (channelNameEl) channelNameEl.textContent = lastName;
+    if (sidebarNameEl) sidebarNameEl.textContent = lastName;
 
     _reset();
-    showLoading(true);
-    showError(false);
+    _showLoading(true);
+    _showError(false);
 
-    // Detectar tipo de fuente
     const isIframe = /youtube\.com|youtu\.be|facebook\.com|twitch\.tv|dailymotion\.com|\/embed\/|\.html$/i.test(url);
     const isDash   = /\.mpd($|\?)/i.test(url);
     const isHLS    = /\.m3u8($|\?)/i.test(url);
-    const isRTMP   = /^rtmp/i.test(url);
 
-    if (isRTMP) {
-      showError('RTMP no soportado en navegadores. Usa un URL .m3u8 o .mpd');
+    if (/^rtmp/i.test(url)) {
+      _showError('Formato no soportado', 'Usa una URL .m3u8, .mpd o un embed de YouTube/Twitch');
       return;
     }
 
-    if (isIframe) {
-      _playIframe(url);
-    } else if (isDash) {
-      _playDash(url);
-    } else if (isHLS) {
-      _playHLS(url, false);
-    } else {
-      _playDirect(url);
-    }
+    if      (isIframe) _playIframe(url);
+    else if (isDash)   _playDash(url);
+    else if (isHLS)    _playHLS(url, false);
+    else               _playDirect(url);
 
     showOverlay();
   }
 
-  // ── Stop / cleanup ────────────────────────────────
+  // ── Stop ──────────────────────────────────────────
   function stop() {
     _reset();
     _exitFullscreen();
     _unlockOrientation();
   }
 
-  // ── Internal: reset all players ──────────────────
+  // ── Reset ─────────────────────────────────────────
   function _reset() {
-    if (hlsInstance)   { hlsInstance.destroy();  hlsInstance  = null; }
-    if (dashInstance)  { dashInstance.reset();   dashInstance = null; }
+    hlsInstance?.destroy();  hlsInstance  = null;
+    dashInstance?.reset();   dashInstance = null;
 
     if (videoEl) {
       videoEl.pause();
@@ -112,169 +111,127 @@ const PlayerModule = (() => {
       videoEl.style.display = 'none';
     }
     if (iframeEl) {
-      iframeEl.src = '';
+      iframeEl.src         = '';
       iframeEl.style.display = 'none';
     }
+    if (adShield) adShield.style.display = 'none';
     clearOverlayTimer();
   }
 
-  // ── CORS Proxy list ──────────────────────────────
-  // Probados en orden. Si todos fallan → intento iframe (último recurso).
-  // Para agregar tu propio proxy: url => `https://tu-proxy.com/?url=${encodeURIComponent(url)}`
-  const CORS_PROXIES = [
-    null,  // 0: directo (sin proxy)
-    url => `https://corsproxy.io/?${encodeURIComponent(url)}`,
-    url => `https://proxy.cors.sh/${url}`,
-    url => `https://thingproxy.freeboard.io/fetch/${url}`,
-  ];
-  let proxyIndex = 0;
-
-  function _applyProxy(url) {
-    if (proxyIndex === 0) return url;
-    const fn = CORS_PROXIES[proxyIndex];
-    return fn ? fn(url) : url;
-  }
-
-  // ── Playback methods ──────────────────────────────
-  function _playHLS(url, retryAsProxy = false) {
+  // ── HLS ───────────────────────────────────────────
+  function _playHLS(url, isRetry) {
     videoEl.style.display = 'block';
 
-    if (retryAsProxy) {
-      proxyIndex = Math.min(proxyIndex + 1, CORS_PROXIES.length - 1);
-    } else {
-      proxyIndex = 0;
-    }
-
-    const srcUrl = _applyProxy(url);
-    if (proxyIndex > 0) {
-      console.warn(`[Player] Intentando proxy ${proxyIndex}: ${srcUrl}`);
-    }
+    if (isRetry) proxyIndex = Math.min(proxyIndex + 1, CORS_PROXIES.length - 1);
+    const src = _proxied(url);
 
     if (typeof Hls !== 'undefined' && Hls.isSupported()) {
-      if (hlsInstance) { hlsInstance.destroy(); hlsInstance = null; }
-
+      hlsInstance?.destroy();
       hlsInstance = new Hls({
         enableWorker: true,
         lowLatencyMode: true,
         backBufferLength: 30,
-        xhrSetup(xhr) { xhr.withCredentials = false; }
+        xhrSetup: xhr => { xhr.withCredentials = false; }
       });
-      hlsInstance.loadSource(srcUrl);
+      hlsInstance.loadSource(src);
       hlsInstance.attachMedia(videoEl);
       hlsInstance.on(Hls.Events.MANIFEST_PARSED, () => {
-        showLoading(false);
+        _showLoading(false);
         videoEl.play().catch(() => {});
       });
       hlsInstance.on(Hls.Events.ERROR, (_, data) => {
         if (!data.fatal) return;
-
         if (proxyIndex < CORS_PROXIES.length - 1) {
-          // Quedan proxies por intentar
           _playHLS(url, true);
         } else {
-          // Todos los proxies HLS fallaron — intentar iframe como último recurso
-          console.warn('[Player] Todos los proxies HLS fallaron, intentando iframe embed...');
-          _tryIframeEmbed(url);
+          _tryFallbackEmbed(url);
         }
       });
     } else if (videoEl.canPlayType('application/vnd.apple.mpegurl')) {
-      // Native HLS (Safari/iOS)
-      videoEl.src = srcUrl;
-      videoEl.addEventListener('loadedmetadata', () => {
-        showLoading(false);
-        videoEl.play().catch(() => {});
-      }, { once: true });
-      videoEl.addEventListener('error', () => {
-        if (proxyIndex < CORS_PROXIES.length - 1) {
-          _playHLS(url, true);
-        } else {
-          _tryIframeEmbed(url);
-        }
-      }, { once: true });
+      videoEl.src = src;
+      videoEl.onloadedmetadata = () => { _showLoading(false); videoEl.play().catch(() => {}); };
+      videoEl.onerror = () => proxyIndex < CORS_PROXIES.length - 1 ? _playHLS(url, true) : _tryFallbackEmbed(url);
     } else {
-      showError('HLS no soportado en este dispositivo');
+      _showError('HLS no soportado', 'Tu navegador no soporta streams HLS');
     }
   }
 
-  // ── Iframe fallback: intenta cargar el m3u8 en un iframe embed ──
-  // Útil cuando el propio sitio de origen tiene un player embebible.
-  // Si la URL tiene un dominio conocido con player web, redirige allí.
-  function _tryIframeEmbed(url) {
-    try {
-      const domain = new URL(url).hostname;
-
-      // Mapa de CDNs conocidos → su player embed público
-      const knownEmbeds = {
-        'venevision': 'https://www.venevision.com/en-vivo',
-        'rcntelevision': 'https://www.rcntelevision.com/envivo',
-        'canalrcn': 'https://www.canalrcn.com/envivo',
-        'caracoltv': 'https://caracoltv.com/envivo',
-        'rpp': 'https://rpp.pe/envivo',
-      };
-
-      const matchKey = Object.keys(knownEmbeds).find(k => domain.includes(k));
-      if (matchKey) {
-        console.warn(`[Player] Redirigiendo a embed conocido: ${knownEmbeds[matchKey]}`);
-        _playIframe(knownEmbeds[matchKey]);
-        return;
-      }
-    } catch (e) {}
-
-    // No hay embed conocido — mostrar error con instrucciones claras
-    showError('CORS bloqueado — usa un embed o URL pública');
-  }
-
+  // ── DASH ──────────────────────────────────────────
   function _playDash(url) {
     videoEl.style.display = 'block';
-
-    if (typeof dashjs === 'undefined') {
-      showError('DASH player no disponible');
-      return;
-    }
-
+    if (typeof dashjs === 'undefined') { _showError('Player no disponible', 'Error cargando dash.js'); return; }
     dashInstance = dashjs.MediaPlayer().create();
     dashInstance.initialize(videoEl, url, true);
-    dashInstance.on(dashjs.MediaPlayer.events.STREAM_INITIALIZED, () => showLoading(false));
-    dashInstance.on(dashjs.MediaPlayer.events.ERROR, () => showError('Error de conexión DASH'));
+    dashInstance.on(dashjs.MediaPlayer.events.STREAM_INITIALIZED, () => _showLoading(false));
+    dashInstance.on(dashjs.MediaPlayer.events.ERROR, () =>
+      _showError('Error de conexión', 'No se pudo cargar el stream DASH'));
   }
 
+  // ── Iframe ────────────────────────────────────────
   function _playIframe(url) {
     iframeEl.style.display = 'block';
+    // Mostrar escudo anti-ads sobre el iframe
+    if (adShield) {
+      adShield.style.display = 'block';
+      // Ocultar el escudo tras 5s para no bloquear los controles del player embebido
+      setTimeout(() => { if (adShield) adShield.style.display = 'none'; }, 5000);
+    }
     iframeEl.src = url;
 
-    // Ocultar spinner después de 3s (iframes no disparan eventos fiables)
-    const t = setTimeout(() => showLoading(false), 3000);
-
-    // Si el iframe dispara error (raro pero posible en algunos browsers)
-    iframeEl.onerror = () => {
-      clearTimeout(t);
-      showError('El sitio no permite ser embebido');
-    };
-
-    // Detectar si quedó en blanco (X-Frame-Options) después de carga
-    iframeEl.onload = () => {
-      clearTimeout(t);
-      showLoading(false);
-      try {
-        // Si podemos leer contentDocument estamos en same-origin — OK
-        // Si lanza SecurityError → cross-origin pero cargó (probablemente bien)
-        void iframeEl.contentDocument;
-      } catch (e) {
-        // Cross-origin → normal, probablemente cargó correctamente
-        showLoading(false);
-      }
-    };
+    const t = setTimeout(() => _showLoading(false), 3500);
+    iframeEl.onload = () => { clearTimeout(t); _showLoading(false); };
+    iframeEl.onerror = () => { clearTimeout(t); _tryFallbackEmbed(url); };
   }
 
+  // ── Direct MP4/etc ────────────────────────────────
   function _playDirect(url) {
     videoEl.style.display = 'block';
     videoEl.src = url;
     videoEl.play()
-      .then(() => showLoading(false))
-      .catch(() => showError('No se pudo reproducir el canal'));
+      .then(() => _showLoading(false))
+      .catch(() => _showError('Sin señal', 'No se pudo reproducir el canal'));
   }
 
-  // ── Overlay controls ─────────────────────────────
+  // ── Fallback embed cuando HLS falla por CORS ──────
+  function _tryFallbackEmbed(url) {
+    try {
+      const domain = new URL(url).hostname;
+      const KNOWN = {
+        'venevision':   'https://www.venevision.com/en-vivo',
+        'rcntelevision':'https://www.rcntelevision.com/envivo',
+        'caracoltv':    'https://caracoltv.com/envivo',
+        'espn':         'https://www.espn.com/watch',
+        'foxsports':    'https://www.foxsports.com/live',
+        'directvsports':'https://www.directvsports.com',
+      };
+      const key = Object.keys(KNOWN).find(k => domain.includes(k));
+      if (key) { _playIframe(KNOWN[key]); return; }
+    } catch (e) {}
+
+    _showError(
+      'Canal bloqueado por CORS',
+      'Reemplaza la URL .m3u8 por un embed de YouTube o Twitch en config.json'
+    );
+  }
+
+  // ── Error display ─────────────────────────────────
+  function _showError(title, msg) {
+    _showLoading(false);
+    if (!errorEl) return;
+    if (title === false) { errorEl.classList.remove('visible'); return; }
+
+    const tEl = document.getElementById('error-title');
+    const mEl = document.getElementById('error-msg');
+    if (tEl) tEl.textContent = title || 'Sin señal';
+    if (mEl) mEl.textContent = msg   || 'El canal no está disponible en este momento';
+    errorEl.classList.add('visible');
+  }
+
+  function _showLoading(visible) {
+    loadingEl?.classList.toggle('visible', visible);
+  }
+
+  // ── Overlay ───────────────────────────────────────
   function showOverlay() {
     overlayEl?.classList.add('visible');
     clearOverlayTimer();
@@ -282,79 +239,46 @@ const PlayerModule = (() => {
   }
 
   function toggleOverlay() {
-    const isVisible = overlayEl?.classList.contains('visible');
-    if (isVisible) {
-      overlayEl.classList.remove('visible');
-      clearOverlayTimer();
-    } else {
-      showOverlay();
-    }
+    const vis = overlayEl?.classList.contains('visible');
+    if (vis) { overlayEl.classList.remove('visible'); clearOverlayTimer(); }
+    else showOverlay();
   }
 
   function clearOverlayTimer() {
     if (overlayTimer) { clearTimeout(overlayTimer); overlayTimer = null; }
   }
 
-  // ── Error / Loading states ────────────────────────
-  function showError(message) {
-    showLoading(false);
-    if (!errorEl) return;
-    if (message) {
-      const p = errorEl.querySelector('p');
-      if (p) p.textContent = message;
-      errorEl.classList.add('visible');
-    } else {
-      errorEl.classList.remove('visible');
-    }
-  }
-
-  function showLoading(visible) {
-    loadingEl?.classList.toggle('visible', visible);
-  }
-
   // ── Fullscreen ────────────────────────────────────
   async function toggleFullscreen() {
-    const wrapper = document.getElementById('video-wrapper');
-    if (!wrapper) return;
-
+    const w = document.getElementById('video-wrapper');
+    if (!w) return;
     try {
       if (!document.fullscreenElement && !document.webkitFullscreenElement) {
-        if (wrapper.requestFullscreen)         await wrapper.requestFullscreen();
-        else if (wrapper.webkitRequestFullscreen) wrapper.webkitRequestFullscreen();
+        await (w.requestFullscreen || w.webkitRequestFullscreen).call(w);
         _lockLandscape();
       } else {
         _exitFullscreen();
         _unlockOrientation();
       }
-    } catch (e) {
-      console.warn('[Player] Fullscreen error:', e);
-    }
+    } catch (e) {}
   }
 
   function _exitFullscreen() {
     try {
-      if (document.fullscreenElement)        document.exitFullscreen?.();
-      else if (document.webkitFullscreenElement) document.webkitExitFullscreen?.();
+      (document.exitFullscreen || document.webkitExitFullscreen)?.call(document);
     } catch (e) {}
   }
 
   function _lockLandscape() {
-    try {
-      if (screen.orientation?.lock && /Android|iPhone|iPad|iPod/i.test(navigator.userAgent)) {
-        screen.orientation.lock('landscape').catch(() => {});
-      }
-    } catch (e) {}
+    if (/Android|iPhone|iPad/i.test(navigator.userAgent))
+      screen.orientation?.lock('landscape').catch(() => {});
   }
 
   function _unlockOrientation() {
-    try {
-      screen.orientation?.unlock?.();
-    } catch (e) {}
+    screen.orientation?.unlock?.();
   }
 
-  // ── Public API ────────────────────────────────────
   return { mount, play, stop, showOverlay };
 })();
 
-// Expose globally so Router can call stop() on back navigation
 window.PlayerModule = PlayerModule;
