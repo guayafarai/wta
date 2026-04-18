@@ -35,6 +35,15 @@
       "is_vip": false,
       "logo": ""
     }
-
+    {
+      "id": "mtv-lat",
+      "name": "ESPN 3",
+      "category": "Deportes",
+      "country": "US",
+      "url": "https://embed.ksdjugfsddeports.com/embed/espn3.html",
+      "is_vip": false,
+      "logo": ""
+    }    
+    
   ]
 }
