@@ -1,16 +1,65 @@
 [
     {
-        "id": "tottenham-vs-brighton--english-premier-league-17-30",
+        "id": "chelsea-vs-manchester-united-----eng--english-premier-league-20-00",
         "category": "FUTBOL",
-        "name": "Tottenham vs Brighton\n English Premier League 17:30",
-        "url": "https://a.uliyyrer.shop/hls/kikiki.m3u8",
+        "name": "Chelsea vs Manchester United --- ENG\n English Premier League 20:00",
+        "url": "https://a.uliyyrer.shop/hls/NININI.m3u8",
         "logo": ""
     },
     {
-        "id": "tottenham-vs-brighton-----hd--english-premier-league-17-30",
+        "id": "chelsea-vs-manchester-united-----eng-hd--english-premier-league-20-00",
         "category": "FUTBOL",
-        "name": "Tottenham vs Brighton --- HD\n English Premier League 17:30",
-        "url": "https://live.kinescopecdn.net/on-air/5bf2c07e-3604-42cf-959a-67ed8914ffd5/9cb69dfa-93c6-411d-afc7-66841ed2b5bc/master.m3u8",
+        "name": "Chelsea vs Manchester United --- ENG HD\n English Premier League 20:00",
+        "url": "https://ml-pull-hwc.myco.io/EPLBONGO5/hls/EPLBONGO5_H264-720p.m3u8?pkg_media=video&pkg_hm=index.m3u8&pkg_svc=1&pkg_vcodec=avc1",
+        "logo": ""
+    },
+    {
+        "id": "chelsea-vs-manchester-united-----swe--english-premier-league-20-00",
+        "category": "FUTBOL",
+        "name": "Chelsea vs Manchester United --- SWE\n English Premier League 20:00",
+        "url": "https://a.uliyyrer.shop/hls/NININIX.m3u8",
+        "logo": ""
+    },
+    {
+        "id": "chelsea-vs-manchester-united-----ch-hd--english-premier-league-20-00",
+        "category": "FUTBOL",
+        "name": "Chelsea vs Manchester United --- CH HD\n English Premier League 20:00",
+        "url": "https://live.kinescopecdn.net/on-air/5bf2c07e-3604-42cf-959a-67ed8914ffd5/c9593ed9-de6e-44fd-bfb4-09eae24ab2c9/master.m3u8",
+        "logo": ""
+    },
+    {
+        "id": "lille-vs-nice--ligue-1-france-20-05",
+        "category": "FUTBOL",
+        "name": "Lille vs Nice\n Ligue 1 France 20:05",
+        "url": "https://s.zekll.shop/hls/UCCCQQQQQ.m3u8",
+        "logo": ""
+    },
+    {
+        "id": "atletico-madrid-vs-real-sociedad--spanish-copa-del-rey-20-00",
+        "category": "FUTBOL",
+        "name": "Atletico Madrid vs Real Sociedad\n Spanish Copa del Rey 20:00",
+        "url": "https://s.zekll.shop/hls/UCCCQQQQ.m3u8",
+        "logo": ""
+    },
+    {
+        "id": "berkane-vs-far-rabat--caf-champions-league-20-00",
+        "category": "FUTBOL",
+        "name": "Berkane vs FAR Rabat\n CAF Champions League 20:00",
+        "url": "https://s.zekll.shop/hls/UCCCQQQ.m3u8",
+        "logo": ""
+    },
+    {
+        "id": "as-roma-vs-atalanta--italy-serie-a-19-45",
+        "category": "FUTBOL",
+        "name": "AS Roma vs Atalanta\n Italy Serie A 19:45",
+        "url": "https://s.zekll.shop/hls/KRRRQQ.m3u8",
+        "logo": ""
+    },
+    {
+        "id": "sloga-meridian-vs-zrinjski--bosnia-and-herzegovina-premier-league-19-45",
+        "category": "FUTBOL",
+        "name": "Sloga Meridian vs Zrinjski\n Bosnia and Herzegovina Premier League 19:45",
+        "url": "https://s.zekll.shop/hls/GIIIIQ.m3u8",
         "logo": ""
     },
     {
@@ -67,13 +116,6 @@
         "category": "FUTBOL",
         "name": "Eintracht Frankfurt vs RB Leipzig\n German Bundesliga 17:30",
         "url": "https://s.zekll.shop/hls/GIIIIQQ.m3u8",
-        "logo": ""
-    },
-    {
-        "id": "borac-banja-luka-vs-velez-mostar--bosnia-and-herzegovina-premier-league-17-30",
-        "category": "FUTBOL",
-        "name": "Borac Banja Luka vs Velez Mostar\n Bosnia and Herzegovina Premier League 17:30",
-        "url": "https://s.zekll.shop/hls/GIIIIQ.m3u8",
         "logo": ""
     },
     {
