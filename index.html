@@ -7,110 +7,161 @@
   <meta name="mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-  <meta name="referrer" content="no-referrer">
+  <meta name="format-detection" content="telephone=no">
+<meta name="referrer" content="no-referrer">
   
   <title>PlayCast PRO</title>
-  <link rel="stylesheet" href="css/style.css">
-  
-  <script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
-  <script src="https://cdn.dashjs.org/latest/dash.all.min.js"></script>
+
+  <!-- Favicon inline -->
+  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%230b0d12'/%3E%3Cpolygon points='10,8 26,16 10,24' fill='%23e63946'/%3E%3C/svg%3E">
+  <link rel="shortcut icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%230b0d12'/%3E%3Cpolygon points='10,8 26,16 10,24' fill='%23e63946'/%3E%3C/svg%3E">
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,600;9..40,700&display=swap" rel="stylesheet">
+
+  <link rel="stylesheet" href="css/base.css">
+  <link rel="stylesheet" href="css/dashboard.css">
+  <link rel="stylesheet" href="css/player.css">
+
+  <script src="https://cdn.jsdelivr.net/npm/hls.js@latest/dist/hls.min.js" defer></script>
+  <script src="https://cdn.jsdelivr.net/npm/dashjs@latest/dist/dash.all.min.js" defer></script>
 </head>
 <body>
 
-  <div id="app">
-    
-    <header class="main-header">
-      <div class="header-content">
-        <div class="logo">
-          <span class="logo-icon">▶</span>
-          <span class="logo-text">PlayCast <span>PRO</span></span>
-        </div>
-        <div class="header-actions">
-          <button id="notifBadge" class="btn-icon">
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/>
-            </svg>
-          </button>
-        </div>
+<!-- ════════════════════════════════════════
+     DASHBOARD
+     ════════════════════════════════════════ -->
+<div id="page-dashboard" class="page active" style="display:block;">
+
+  <header id="dashboard-header">
+    <div class="header-inner">
+      <div class="brand">
+        <span class="brand-logo" aria-hidden="true">▶</span>
+        <span class="brand-name">PLAYCAST</span>
+        <span class="brand-badge">PRO</span>
       </div>
-    </header>
-
-    <main id="page-dashboard" class="page active">
-      <div class="hero-section">
-        <h1>Deportes en vivo</h1>
-        <p>NBA, MLB y más sin interrupciones.</p>
+      <div class="header-actions">
+        <button class="icon-btn notif-btn" id="notifBtn" title="Notificaciones" aria-label="Activar notificaciones">
+          🔔
+          <span class="notif-badge" id="notifBadge"></span>
+        </button>
       </div>
-      <div class="search-bar">
-        <div class="search-input-wrapper">
-          <input type="text" id="searchInput" placeholder="Busca tu equipo o canal...">
-        </div>
-      </div>
-      <nav class="category-tabs">
-        <button class="tab-item active" data-cat="todos">Todos</button>
-        <button class="tab-item" data-cat="nba">NBA</button>
-        <button class="tab-item" data-cat="mlb">MLB</button>
-      </nav>
-      <div id="channel-list" class="channel-grid"></div>
-    </main>
+    </div>
+  </header>
 
-    <main id="page-player" class="page" style="display:none;">
-      <div id="video-wrapper" class="video-container">
-        <video id="video-player" playsinline controls style="display:none;"></video>
-        
-        <iframe 
-          id="iframe-player" 
-          class="player-frame" 
-          style="display:none;" 
-          sandbox="allow-scripts allow-same-origin allow-forms allow-presentation" 
-          allowfullscreen>
-        </iframe>
+  <!-- Tabs de categoría: Todos / NBA / MLB -->
+  <div class="categories-container" id="cat-tabs" role="tablist" aria-label="Categorías"></div>
 
-        <div id="stream-loading" class="player-loader">
-          <div class="spinner"></div>
-          <span>Cargando señal...</span>
-        </div>
-
-        <div id="stream-error" class="player-error">
-          <div class="error-content">
-            <h2 id="error-title">Sin señal</h2>
-            <p id="error-msg">Intenta nuevamente en unos instantes.</p>
-            <button id="btn-retry-stream" class="btn-retry">🔄 Reintentar</button>
-          </div>
-        </div>
-
-        <div id="player-overlay">
-          <div class="player-top-bar">
-            <button id="btn-back-player">
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
-                <polyline points="15 18 9 12 15 6"/>
-              </svg>
-              Canales
-            </button>
-            <span id="player-channel-name">—</span>
-            <div id="live-badge"><span class="pulse-dot"></span>EN VIVO</div>
-          </div>
-          <div class="player-bottom-bar">
-            <button class="player-action-btn" id="btn-fullscreen">
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <path d="M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3m0 18h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3"/>
-              </svg>
-            </button>
-          </div>
-        </div>
-      </div>
-
-      <div class="player-info">
-        <div class="info-header">
-          <h3>Canales Recomendados</h3>
-        </div>
-        <div id="suggested-list" class="suggested-grid"></div>
-      </div>
-    </main>
+  <!-- Buscador -->
+  <div class="search-container">
+    <div class="search-box" role="search">
+      <svg class="search-icon" width="18" height="18" viewBox="0 0 24 24" fill="none"
+           stroke="currentColor" stroke-width="2" aria-hidden="true">
+        <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
+      </svg>
+      <input type="search" id="channelSearch" placeholder="Buscar canal..."
+             autocomplete="off" autocorrect="off" spellcheck="false" aria-label="Buscar">
+      <button id="clearSearch" aria-label="Limpiar">✕</button>
+    </div>
   </div>
 
-  <script src="js/router.js"></script>
-  <script src="js/channels.js"></script>
-  <script src="js/player.js"></script>
-  <script src="js/app.js"></script>
+  <main id="dashboard-main" role="main">
+    <div class="section-header">
+      <span class="section-title" id="section-title">EN VIVO</span>
+      <span class="channel-count" id="channelCount"></span>
+    </div>
+    <div id="channel-list" class="list-view" role="list"></div>
+    <div id="emptyState" role="status">
+      <div class="empty-icon">📺</div>
+      <p>No se encontraron canales</p>
+    </div>
+  </main>
+
+  <footer id="app-footer">
+    <span id="footerText"></span>
+  </footer>
+
+</div>
+
+
+<!-- ════════════════════════════════════════
+     PLAYER
+     ════════════════════════════════════════ -->
+<div id="page-player" class="page" style="display:none;">
+
+  <div id="video-wrapper">
+
+    <video id="video-player" playsinline webkit-playsinline x5-playsinline preload="none"></video>
+
+    <!--
+      sandbox bloquea popups/redirecciones a nivel de navegador:
+      - allow-scripts        → el player del embed puede ejecutar JS
+      - allow-forms          → algunos players usan forms internamente
+      - allow-presentation   → necesario para fullscreen en embeds
+      SIN allow-same-origin  → evita warning "can escape its sandboxing"
+      SIN allow-popups       → BLOQUEA toda ventana emergente
+      SIN allow-top-navigation → BLOQUEA redirecciones de la página
+    -->
+    <iframe id="iframe-player"
+            sandbox="allow-scripts allow-forms allow-presentation"
+            allow="autoplay; encrypted-media; fullscreen; picture-in-picture"
+            referrerpolicy="no-referrer"
+            title="Canal embebido">
+    </iframe>
+
+    <div id="stream-loading" role="status">
+      <div class="spinner"></div>
+      <p class="loading-text">Conectando...</p>
+    </div>
+
+    <div id="stream-error" role="alert">
+      <div class="error-icon">📡</div>
+      <h3 id="error-title">Sin señal</h3>
+      <p id="error-msg">El canal no está disponible</p>
+      <button id="btn-retry-stream" class="btn-retry">🔄 Reintentar</button>
+    </div>
+
+    <div id="player-overlay">
+      <div class="player-top-bar">
+        <button id="btn-back-player">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none"
+               stroke="currentColor" stroke-width="2.5">
+            <polyline points="15 18 9 12 15 6"/>
+          </svg>
+          Canales
+        </button>
+        <span id="player-channel-name">—</span>
+        <div id="live-badge">
+          <span class="pulse-dot"></span>EN VIVO
+        </div>
+      </div>
+      <div class="player-bottom-bar">
+        <button class="player-action-btn" id="btn-fullscreen" title="Pantalla completa">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3m0 18h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3"/>
+          </svg>
+        </button>
+      </div>
+    </div>
+
+  </div><!-- /video-wrapper -->
+
+  <div id="player-sidebar">
+    <div class="player-info-panel">
+      <h2 id="sidebar-channel-name">Canal</h2>
+      <p class="related-title">MÁS CANALES</p>
+      <div class="related-list" id="related-list"></div>
+    </div>
+  </div>
+
+</div><!-- /page-player -->
+
+<div id="toast-container" aria-live="polite" aria-atomic="true"></div>
+
+<script src="js/router.js"></script>
+<script src="js/channels.js"></script>
+<script src="js/player.js"></script>
+<script src="js/app.js"></script>
 </body>
 </html>
