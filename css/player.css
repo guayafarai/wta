@@ -1,8 +1,7 @@
 /* ═══════════════════════════════════════════════════
-   PlayCast PRO — Player Page Styles
+   PlayCast PRO — Player Styles
    ═══════════════════════════════════════════════════ */
 
-/* ─── Player Page ────────────────────────────────── */
 #page-player {
   background: #000;
   min-height: 100dvh;
@@ -10,7 +9,7 @@
   flex-direction: column;
 }
 
-/* ─── Video Container ────────────────────────────── */
+/* ─── Video wrapper ──────────────────────────────── */
 #video-wrapper {
   position: relative;
   width: 100%;
@@ -20,30 +19,13 @@
   flex-shrink: 0;
 }
 
-/* Full height in landscape */
 @media (orientation: landscape) {
-  #page-player { flex-direction: row; }
-  #video-wrapper {
-    aspect-ratio: unset;
-    flex: 1;
-    height: 100dvh;
-  }
-  #player-sidebar {
-    width: 280px;
-    overflow-y: auto;
-    border-left: 1px solid var(--border);
-  }
+  #page-player   { flex-direction: row; }
+  #video-wrapper { aspect-ratio: unset; flex: 1; height: 100dvh; }
+  #player-sidebar { width: 280px; overflow-y: auto; border-left: 1px solid var(--border); }
 }
 
-
-
-.loading-text {
-  margin-top: 12px;
-  font-size: 0.82rem;
-  color: rgba(255,255,255,0.5);
-  text-align: center;
-}
-
+/* ─── Video & Iframe ─────────────────────────────── */
 #video-player,
 #iframe-player {
   position: absolute;
@@ -54,10 +36,10 @@
   object-fit: contain;
 }
 
-#video-player { z-index: 1; }
+#video-player  { z-index: 1; }
 #iframe-player { z-index: 2; display: none; }
 
-/* ─── Player Controls Overlay ────────────────────── */
+/* ─── Controls overlay ───────────────────────────── */
 #player-overlay {
   position: absolute;
   inset: 0;
@@ -69,15 +51,11 @@
   transition: opacity 0.3s ease;
   pointer-events: none;
 }
-
-#player-overlay.visible {
-  opacity: 1;
-  pointer-events: all;
-}
+#player-overlay.visible { opacity: 1; pointer-events: all; }
 
 .player-top-bar {
   padding: env(safe-area-inset-top, 12px) 16px 16px;
-  background: linear-gradient(to bottom, rgba(0,0,0,0.85) 0%, transparent 100%);
+  background: linear-gradient(to bottom, rgba(0,0,0,0.85), transparent);
   display: flex;
   align-items: center;
   gap: 12px;
@@ -97,10 +75,10 @@
   backdrop-filter: blur(6px);
   -webkit-backdrop-filter: blur(6px);
   flex-shrink: 0;
-  transition: background 0.2s;
-  /* Thumb zone — bottom area on mobile, so top bar needs to be reachable */
   min-height: 40px;
   min-width: 44px;
+  transition: background 0.2s;
+  cursor: pointer;
 }
 #btn-back-player:active { background: rgba(255,255,255,0.2); }
 
@@ -130,7 +108,7 @@
 
 .player-bottom-bar {
   padding: 16px 16px env(safe-area-inset-bottom, 16px);
-  background: linear-gradient(to top, rgba(0,0,0,0.85) 0%, transparent 100%);
+  background: linear-gradient(to top, rgba(0,0,0,0.85), transparent);
   display: flex;
   align-items: center;
   justify-content: flex-end;
@@ -149,10 +127,11 @@
   -webkit-backdrop-filter: blur(4px);
   transition: background 0.2s;
   flex-shrink: 0;
+  cursor: pointer;
 }
 .player-action-btn:active { background: rgba(255,255,255,0.25); transform: scale(0.95); }
 
-/* ─── Stream Error ───────────────────────────────── */
+/* ─── Error ──────────────────────────────────────── */
 #stream-error {
   display: none;
   position: absolute;
@@ -166,13 +145,11 @@
   color: var(--text-dim);
 }
 #stream-error.visible { display: flex; }
-
 .error-icon { font-size: 3.5rem; }
 #stream-error h3 { font-size: 1rem; color: var(--text); }
-#stream-error p { font-size: 0.85rem; max-width: 220px; text-align: center; }
+#stream-error p  { font-size: 0.85rem; max-width: 240px; text-align: center; line-height: 1.5; }
 
 .btn-retry {
-  margin-top: 4px;
   background: var(--red);
   color: #fff;
   border: none;
@@ -180,19 +157,22 @@
   border-radius: var(--radius-sm);
   font-weight: 700;
   font-size: 0.88rem;
-  transition: background 0.2s;
   min-height: 44px;
+  cursor: pointer;
+  transition: background 0.2s;
 }
 .btn-retry:active { background: var(--red-dim); }
 
-/* ─── Loading Spinner ────────────────────────────── */
+/* ─── Loading ────────────────────────────────────── */
 #stream-loading {
   display: none;
   position: absolute;
   inset: 0;
   background: rgba(0,0,0,0.6);
+  flex-direction: column;
   align-items: center;
   justify-content: center;
+  gap: 14px;
   z-index: 15;
 }
 #stream-loading.visible { display: flex; }
@@ -204,46 +184,23 @@
   border-radius: 50%;
   animation: spin 0.8s linear infinite;
 }
+@keyframes spin { to { transform: rotate(360deg); } }
 
-@keyframes spin {
-  to { transform: rotate(360deg); }
+.loading-text {
+  font-size: 0.82rem;
+  color: rgba(255,255,255,0.5);
 }
 
-/* ─── Player Info Panel (portrait, below video) ──── */
+/* ─── Sidebar ────────────────────────────────────── */
 #player-sidebar {
   background: var(--bg);
   flex: 1;
   overflow-y: auto;
 }
 
-.player-info-panel {
-  padding: 20px;
-}
+.player-info-panel { padding: 20px; }
+.player-info-panel h2 { font-size: 1.05rem; font-weight: 700; margin-bottom: 16px; }
 
-.player-info-panel h2 {
-  font-size: 1.05rem;
-  font-weight: 700;
-  margin-bottom: 6px;
-}
-
-.player-meta {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  margin-bottom: 20px;
-}
-
-.player-cat-badge {
-  background: var(--bg-3);
-  border: 1px solid var(--border);
-  color: var(--text-dim);
-  font-size: 0.72rem;
-  font-weight: 600;
-  padding: 3px 10px;
-  border-radius: var(--radius-pill);
-}
-
-/* ─── Related Channels ───────────────────────────── */
 .related-title {
   font-family: var(--font-display);
   font-size: 0.95rem;
@@ -252,11 +209,7 @@
   margin-bottom: 12px;
 }
 
-.related-list {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-}
+.related-list { display: flex; flex-direction: column; gap: 8px; }
 
 .related-card {
   display: flex;
@@ -267,6 +220,7 @@
   border-radius: var(--radius-sm);
   padding: 10px 14px;
   transition: border-color 0.2s, transform 0.15s;
+  cursor: pointer;
 }
 .related-card:active { transform: scale(0.99); border-color: var(--red); }
 
@@ -279,6 +233,7 @@
   flex-shrink: 0;
   overflow: hidden;
 }
+.related-logo img { width: 100%; height: 100%; object-fit: cover; }
 
 .related-name {
   flex: 1;
@@ -299,15 +254,11 @@
   font-size: 0.75rem;
   font-weight: 700;
   flex-shrink: 0;
+  cursor: pointer;
   transition: background 0.2s;
 }
 .btn-related-play:active { background: var(--red-dim); }
 
-/* ─── Fullscreen mode adjustments ───────────────── */
-:fullscreen #page-player { min-height: 100vh; }
+/* ─── Fullscreen ─────────────────────────────────── */
 :fullscreen #player-sidebar { display: none; }
-:fullscreen #video-wrapper {
-  aspect-ratio: unset;
-  height: 100vh;
-  flex: 1;
-}
+:fullscreen #video-wrapper  { aspect-ratio: unset; height: 100vh; flex: 1; }
