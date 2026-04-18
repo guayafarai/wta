@@ -104,6 +104,9 @@ const PlayerModule = (() => {
     hlsInstance?.destroy();  hlsInstance  = null;
     dashInstance?.reset();   dashInstance = null;
 
+    // Limpiar bloqueadores de ads del iframe anterior
+    _removeAdBlockers();
+
     if (videoEl) {
       videoEl.pause();
       videoEl.removeAttribute('src');
@@ -111,10 +114,9 @@ const PlayerModule = (() => {
       videoEl.style.display = 'none';
     }
     if (iframeEl) {
-      iframeEl.src         = '';
+      iframeEl.src           = '';
       iframeEl.style.display = 'none';
     }
-    if (adShield) adShield.style.display = 'none';
     clearOverlayTimer();
   }
 
@@ -167,20 +169,170 @@ const PlayerModule = (() => {
       _showError('Error de conexión', 'No se pudo cargar el stream DASH'));
   }
 
-  // ── Iframe ────────────────────────────────────────
+  // ── Iframe con bloqueo total de publicidad ────────
   function _playIframe(url) {
     iframeEl.style.display = 'block';
-    // Mostrar escudo anti-ads sobre el iframe
-    if (adShield) {
-      adShield.style.display = 'block';
-      // Ocultar el escudo tras 5s para no bloquear los controles del player embebido
-      setTimeout(() => { if (adShield) adShield.style.display = 'none'; }, 5000);
-    }
     iframeEl.src = url;
+
+    // 1) Activar escudo permanente en bordes
+    _activateAdShield();
+
+    // 2) Interceptar popups ANTES de que el iframe cargue
+    _installPopupBlocker();
+
+    // 3) Detectar cuando el iframe roba foco (popup intento)
+    _installBlurGuard();
 
     const t = setTimeout(() => _showLoading(false), 3500);
     iframeEl.onload = () => { clearTimeout(t); _showLoading(false); };
     iframeEl.onerror = () => { clearTimeout(t); _tryFallbackEmbed(url); };
+  }
+
+  // ── Ad Shield: capas físicas permanentes en bordes ─
+  // Los ads en iframes casi siempre aparecen en:
+  //   - Barra superior (overlay sobre el video)
+  //   - Barra inferior (botón "saltar" o banner)
+  //   - Esquinas (banners flotantes)
+  // Ponemos divs encima de esas zonas que bloquean clics
+  function _activateAdShield() {
+    if (!adShield) return;
+
+    // Limpiar escudos anteriores
+    adShield.innerHTML = '';
+    adShield.style.display = 'block';
+    adShield.style.cssText = `
+      display: block !important;
+      position: absolute !important;
+      inset: 0 !important;
+      z-index: 8 !important;        /* encima del iframe(2), debajo del overlay(10) */
+      pointer-events: none !important;
+      background: transparent !important;
+    `;
+
+    // Franjas que bloquean clics en zonas de anuncios
+    const zones = [
+      // top banner (60px)
+      { top:'0',    left:'0',   width:'100%', height:'60px' },
+      // bottom banner (70px)
+      { top:'auto', bottom:'0', left:'0',   width:'100%', height:'70px' },
+      // esquina top-left (botones de share/logo)
+      { top:'0',    left:'0',   width:'120px', height:'100%' },
+      // esquina top-right (botón X de ad)
+      { top:'0',    right:'0',  width:'80px',  height:'80px' },
+    ];
+
+    zones.forEach(z => {
+      const div = document.createElement('div');
+      div.style.cssText = `
+        position: absolute;
+        top:    ${z.top    || 'auto'};
+        bottom: ${z.bottom || 'auto'};
+        left:   ${z.left   || 'auto'};
+        right:  ${z.right  || 'auto'};
+        width:  ${z.width};
+        height: ${z.height};
+        pointer-events: all;
+        background: transparent;
+        z-index: 1;
+        cursor: default;
+      `;
+      // Bloquear cualquier evento de clic en estas zonas
+      div.addEventListener('click',       e => e.stopPropagation(), true);
+      div.addEventListener('mousedown',   e => e.stopPropagation(), true);
+      div.addEventListener('touchstart',  e => e.stopPropagation(), true);
+      div.addEventListener('touchend',    e => e.stopPropagation(), true);
+      adShield.appendChild(div);
+    });
+  }
+
+  // ── Popup Blocker: sobrescribe window.open ─────────
+  // Los iframes heredan el contexto de la página padre.
+  // Sobrescribimos open() y los métodos de navegación
+  // para que nunca puedan abrir ventanas externas.
+  let _origOpen   = null;
+  let _origAssign = null;
+
+  function _installPopupBlocker() {
+    // Solo instalar una vez
+    if (_origOpen) return;
+
+    // Bloquear window.open (popups directos)
+    _origOpen = window.open;
+    window.open = function(url, target, features) {
+      // Permitir solo si lo llama el propio código de la app (no el iframe)
+      if (_isTrustedCall()) return _origOpen.call(window, url, target, features);
+      console.warn('[AdBlock] window.open bloqueado:', url);
+      return null; // devolver null = popup bloqueado
+    };
+
+    // Bloquear location.assign y href desde el iframe
+    _origAssign = window.location.assign.bind(window.location);
+    try {
+      Object.defineProperty(window, 'location', {
+        get: () => window._safeLocation || location,
+        configurable: true
+      });
+    } catch (e) { /* algunos browsers no permiten redefine de location */ }
+
+    // Escuchar mensajes maliciosos del iframe (postMessage phishing)
+    window.addEventListener('message', _onIframeMessage, true);
+  }
+
+  function _isTrustedCall() {
+    // Detectar si el llamador es el código de la app o el iframe
+    try {
+      const stack = new Error().stack || '';
+      return stack.includes('app.js') || stack.includes('player.js') || stack.includes('channels.js');
+    } catch (e) { return false; }
+  }
+
+  function _onIframeMessage(e) {
+    // Bloquear mensajes de redireccionamiento típicos de ad networks
+    const data = typeof e.data === 'string' ? e.data : JSON.stringify(e.data || '');
+    const isAd = /doubleclick|googlesyndication|adservice|pagead|popunder|clickunder/i.test(data);
+    if (isAd) {
+      e.stopImmediatePropagation();
+      console.warn('[AdBlock] postMessage de ad bloqueado');
+    }
+  }
+
+  // ── Blur Guard: detecta cuando el iframe intenta popup ─
+  // Cuando un iframe abre un popup, la ventana pierde foco
+  // (window blur). Lo detectamos y cerramos el popup inmediatamente.
+  let _blurGuardActive = false;
+
+  function _installBlurGuard() {
+    if (_blurGuardActive) return;
+    _blurGuardActive = true;
+
+    window.addEventListener('blur', _onWindowBlur, true);
+  }
+
+  function _onWindowBlur() {
+    // Pequeño delay para que el popup se abra antes de cerrarlo
+    setTimeout(() => {
+      try {
+        // Forzar foco de vuelta a nuestra ventana
+        window.focus();
+      } catch (e) {}
+    }, 0);
+  }
+
+  // ── Cleanup del bloqueador al salir del player ─────
+  function _removeAdBlockers() {
+    // Restaurar window.open original
+    if (_origOpen) {
+      window.open = _origOpen;
+      _origOpen   = null;
+    }
+    window.removeEventListener('message', _onIframeMessage, true);
+    window.removeEventListener('blur',    _onWindowBlur,    true);
+    _blurGuardActive = false;
+
+    if (adShield) {
+      adShield.innerHTML   = '';
+      adShield.style.display = 'none';
+    }
   }
 
   // ── Direct MP4/etc ────────────────────────────────
