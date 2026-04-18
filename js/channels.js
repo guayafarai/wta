@@ -63,12 +63,15 @@ const ChannelsModule = (() => {
 
   // ── Montar dashboard ──────────────────────────────
   function mount() {
+    // Siempre re-renderizar tabs (son estáticos, no dependen de datos)
+    _renderTabs();
+
     listEl         = document.getElementById('channel-list');
     emptyStateEl   = document.getElementById('emptyState');
     channelCountEl = document.getElementById('channelCount');
-    if (!listEl) return;
-    _renderTabs();
-    _filterAndRender();
+
+    // Renderizar canales si el contenedor existe
+    if (listEl) _filterAndRender();
   }
 
   // ── Tabs de categoría ─────────────────────────────
