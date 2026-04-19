@@ -184,7 +184,9 @@ const ChannelsModule = (() => {
   function _handlePlay(ch, name) {
     if (!ch.url) { showToast(`${name || ch.name} — Próximamente`); return; }
     _incView(ch.id || ch.name);
-    Router.navigate('/player', { id: ch.id || '', name: name || ch.name, url: ch.url });
+    // NO pasamos url en la querystring — evita Mixed Content cuando
+    // el browser recarga la página con http:// en la URL
+    Router.navigate('/player', { id: ch.id || ch.name, name: name || ch.name });
   }
 
   // ── Búsqueda ──────────────────────────────────────
