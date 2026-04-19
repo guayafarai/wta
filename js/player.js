@@ -55,22 +55,26 @@ const PlayerModule = (() => {
     _showLoading(true);
     _showError(false);
 
-    // ── Mixed Content fix ──────────────────────────
-    // Solo proxear streams http:// (Mixed Content bloqueado en HTTPS).
-    // Streams https:// van directo, sin tocar.
+    // ── Proxy fix ─────────────────────────────────
+    // Usamos el Worker para DOS casos:
+    // 1. http://  → Mixed Content bloqueado en página HTTPS
+    // 2. https:// → Servidor CORS bloqueado (403/no Access-Control-Allow-Origin)
+    // El Worker hace la petición desde la nube donde no aplican estas restricciones
     const PROXY_BASE = 'https://playcast-proxy.elblogdevictorlam.workers.dev';
 
-    let streamUrl = url; // URL real que se pasa al player
-    if (location.protocol === 'https:' && url.startsWith('http://')) {
+    let streamUrl = url;
+    const needsProxy = url.startsWith('http://') ||
+                       (url.startsWith('https://') && /\.m3u8|\.mpd|\.ts/i.test(url));
+
+    if (needsProxy) {
       streamUrl = `${PROXY_BASE}?url=${encodeURIComponent(url)}`;
-      // lastUrl conserva la URL original (sin proxy) para reintentos limpios
     }
 
-    // Detectar tipo — usar streamUrl para la detección
-    const isIframe = /youtube\.com|youtu\.be|facebook\.com|twitch\.tv|dailymotion\.com|\/embed\//i.test(streamUrl)
-                  || /\.html?($|\?)/i.test(streamUrl);
-    const isDash   = /\.mpd($|\?)/i.test(streamUrl);
-    const isHLS    = /\.m3u8($|\?)/i.test(url); // detectar por URL original
+    // Detectar tipo por URL original (no por la URL del proxy)
+    const isIframe = /youtube\.com|youtu\.be|facebook\.com|twitch\.tv|dailymotion\.com|\/embed\//i.test(url)
+                  || /\.html?($|\?)/i.test(url);
+    const isDash   = /\.mpd($|\?)/i.test(url);
+    const isHLS    = /\.m3u8($|\?)/i.test(url);
 
     if (/^rtmp/i.test(url)) {
       _showError('RTMP no soportado', 'Usa una URL .m3u8, .mpd o embed de YouTube/Twitch');
