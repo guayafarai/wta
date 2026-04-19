@@ -50,7 +50,7 @@ Router.register('/player', {
     // Nunca usar params.url — evita Mixed Content con http:// en la querystring
     const ch = ChannelsModule.getById(id);
     if (ch && ch.url) {
-      PlayerModule.play(ch.url, name || ch.name, ch.id || id);
+      PlayerModule.play(ch.url, name || ch.name, ch.id || id, ch.referer || '');
     } else {
       PlayerModule.showError?.('Canal no encontrado', 'Vuelve al inicio y selecciónalo de nuevo');
     }
