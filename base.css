@@ -1,0 +1,149 @@
+/* ═══════════════════════════════════════════════════
+   PlayCast PRO — Base Styles & Design Tokens
+   ═══════════════════════════════════════════════════ */
+@import url('https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700&display=swap');
+
+:root {
+  /* Core Palette */
+  --red:         #e63946;
+  --red-dim:     #b02a35;
+  --red-glow:    rgba(230, 57, 70, 0.25);
+  --gold:        #f5a623;
+  --gold-dim:    rgba(245, 166, 35, 0.15);
+
+  /* Backgrounds */
+  --bg:          #0b0d12;
+  --bg-2:        #11141c;
+  --bg-3:        #181c27;
+  --bg-card:     #151820;
+  --bg-overlay:  rgba(11, 13, 18, 0.92);
+
+  /* Borders */
+  --border:      rgba(255, 255, 255, 0.06);
+  --border-hover:rgba(255, 255, 255, 0.14);
+
+  /* Text */
+  --text:        #eaecf2;
+  --text-dim:    #6b7280;
+  --text-muted:  #3a3f52;
+
+  /* Shadows */
+  --shadow-sm:   0 2px 8px rgba(0,0,0,0.35);
+  --shadow-md:   0 4px 20px rgba(0,0,0,0.5);
+  --shadow-lg:   0 8px 40px rgba(0,0,0,0.7);
+  --shadow-red:  0 4px 24px rgba(230,57,70,0.3);
+
+  /* Layout */
+  --max-width:   900px;
+  --radius-sm:   8px;
+  --radius-md:   12px;
+  --radius-lg:   16px;
+  --radius-pill: 999px;
+
+  /* Typography */
+  --font-display: 'Bebas Neue', sans-serif;
+  --font-body:    'DM Sans', sans-serif;
+
+  /* Z-index layers */
+  --z-base:      1;
+  --z-sticky:    100;
+  --z-overlay:   500;
+  --z-modal:     1000;
+  --z-player:    9999;
+  --z-topbar:    10001;
+}
+
+/* ─── Reset ─────────────────────────────────────── */
+*, *::before, *::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+  -webkit-tap-highlight-color: transparent;
+}
+
+html {
+  scroll-behavior: smooth;
+  /* Prevent bounce/overscroll on iOS */
+  overscroll-behavior: none;
+}
+
+body {
+  font-family: var(--font-body);
+  background: var(--bg);
+  color: var(--text);
+  overflow-x: hidden;
+  min-height: 100dvh;
+  /* Disable pull-to-refresh in WebView */
+  overscroll-behavior-y: none;
+  touch-action: pan-x pan-y;
+  -webkit-overflow-scrolling: touch;
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+a { color: inherit; text-decoration: none; }
+button { font-family: var(--font-body); cursor: pointer; }
+input { font-family: var(--font-body); }
+img { display: block; max-width: 100%; }
+
+/* ─── Scrollbar ──────────────────────────────────── */
+::-webkit-scrollbar { width: 4px; height: 4px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: var(--border-hover); border-radius: 2px; }
+
+/* ─── Page Transitions ───────────────────────────── */
+.page {
+  display: none;
+  opacity: 0;
+  transform: translateY(8px);
+  transition: opacity 0.25s ease, transform 0.25s ease;
+  min-height: 100dvh;
+}
+
+.page.active {
+  display: block;
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.page.slide-in {
+  animation: pageSlideIn 0.28s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+}
+
+.page.slide-out {
+  animation: pageSlideOut 0.22s ease-in forwards;
+}
+
+@keyframes pageSlideIn {
+  from { opacity: 0; transform: translateX(32px); }
+  to   { opacity: 1; transform: translateX(0); }
+}
+
+@keyframes pageSlideOut {
+  from { opacity: 1; transform: translateX(0); }
+  to   { opacity: 0; transform: translateX(-20px); }
+}
+
+/* ─── Utility ────────────────────────────────────── */
+.sr-only {
+  position: absolute;
+  width: 1px; height: 1px;
+  overflow: hidden;
+  clip: rect(0,0,0,0);
+  white-space: nowrap;
+}
+
+@keyframes fadeUp {
+  from { opacity: 0; transform: translateY(14px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes pulse-red {
+  0%, 100% { opacity: 1; }
+  50%       { opacity: 0.45; }
+}
+
+@keyframes pulseDot {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50%       { opacity: 0.3; transform: scale(0.6); }
+}
