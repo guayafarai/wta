@@ -1,15 +1,13 @@
-name: Scraper Automático Deportes
+name: Scraper Automático Deportes Pro
 
 on:
   schedule:
-    # '*/20' significa: ejecutar cada 20 minutos (minutos 0, 20 y 40 de cada hora)
-    - cron: '*/20 * * * *' 
-  workflow_dispatch: # Permite ejecución manual por si quieres forzar una actualización
+    - cron: '*/20 * * * *' # Ejecuta cada 20 minutos
+  workflow_dispatch: # Botón para ejecución manual
 
 jobs:
   build:
     runs-on: ubuntu-latest
-    
     steps:
       - name: Checkout del código
         uses: actions/checkout@v3
@@ -30,8 +28,8 @@ jobs:
         run: |
           git config --global user.name 'github-actions[bot]'
           git config --global user.email 'github-actions[bot]@users.noreply.github.com'
-          # Se agregan los tres archivos para que se actualicen en el repositorio
+          # Agrega los tres archivos generados
           git add nba.json mlb.json futbol.json
-          # Si no hay cambios reales en los links, no hace commit para no ensuciar el historial
-          git commit -m "Actualización cada 20 min (NBA, MLB, Fútbol)" || exit 0
+          # Commit si hay cambios, si no hay partidos nuevos no falla
+          git commit -m "Actualización automática: Referer dinámico y Multi-deporte" || exit 0
           git push
