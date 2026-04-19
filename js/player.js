@@ -13,6 +13,7 @@ const PlayerModule = (() => {
   let lastUrl      = '';
   let lastName     = '';
   let lastId       = '';
+  let lastReferer  = '';  // Referer del canal para bypass de hotlink
   let overlayTimer = null;
   let mounted      = false;
 
@@ -41,12 +42,13 @@ const PlayerModule = (() => {
   }
 
   // ── Play ──────────────────────────────────────────
-  function play(url, name, id) {
+  function play(url, name, id, referer) {
     if (!url) { _showError('URL no disponible', 'Agrega la URL del canal en su archivo .json'); return; }
 
-    lastUrl  = url;
-    lastName = name || 'En vivo';
-    lastId   = id   || '';
+    lastUrl     = url;
+    lastName    = name    || 'En vivo';
+    lastId      = id      || '';
+    lastReferer = referer || '';
 
     if (channelNameEl) channelNameEl.textContent = lastName;
     if (sidebarNameEl) sidebarNameEl.textContent = lastName;
@@ -56,10 +58,6 @@ const PlayerModule = (() => {
     _showError(false);
 
     // ── Proxy fix ─────────────────────────────────
-    // Usamos el Worker para DOS casos:
-    // 1. http://  → Mixed Content bloqueado en página HTTPS
-    // 2. https:// → Servidor CORS bloqueado (403/no Access-Control-Allow-Origin)
-    // El Worker hace la petición desde la nube donde no aplican estas restricciones
     const PROXY_BASE = 'https://playcast-proxy.elblogdevictorlam.workers.dev';
 
     let streamUrl = url;
@@ -67,7 +65,12 @@ const PlayerModule = (() => {
                        (url.startsWith('https://') && /\.m3u8|\.mpd|\.ts/i.test(url));
 
     if (needsProxy) {
-      streamUrl = `${PROXY_BASE}?url=${encodeURIComponent(url)}`;
+      // Pasar referer del canal si existe (bypass de hotlink protection)
+      let proxyUrl = `${PROXY_BASE}?url=${encodeURIComponent(url)}`;
+      if (lastReferer) {
+        proxyUrl += `&referer=${encodeURIComponent(lastReferer)}`;
+      }
+      streamUrl = proxyUrl;
     }
 
     // Detectar tipo por URL original (no por la URL del proxy)
