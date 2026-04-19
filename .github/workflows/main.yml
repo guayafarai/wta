@@ -2,7 +2,16 @@ name: Scraper Automático Deportes Pro
 
 on:
   schedule:
-    - cron: '*/20 * * * *' # Ejecuta cada 20 minutos
+    # 1. BLOQUE MAÑANA (Fútbol Europeo)
+    # Corre cada 15 min, desde las 07:30 AM hasta las 3:45 PM (Hora Venezuela)
+    # En UTC es de 11:30 a 19:45
+    - cron: '30/15 11-19 * * *'
+
+    # 2. BLOQUE TARDE/NOCHE (NBA, MLB, MLS y Latam)
+    # Corre cada 10 min, desde las 4:30 PM hasta las 03:50 AM (Hora Venezuela)
+    # En UTC es de 20:30 a 07:50
+    - cron: '30/10 20-23,0-7 * * *'
+
   workflow_dispatch: # Botón para ejecución manual
 
 jobs:
